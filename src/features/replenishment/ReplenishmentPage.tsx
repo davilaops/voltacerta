@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowDownUp, EyeOff, MessageCircle, RefreshCcw, X } from 'lucide-react'
+import { ArrowDownUp, ChevronDown, EyeOff, MessageCircle, RefreshCcw, SlidersHorizontal, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input, Select } from '@/components/ui/input'
@@ -39,7 +40,13 @@ export function ReplenishmentPage() {
   const counts = Object.fromEntries(TABS.map((t) => [t.value, (q.data ?? []).filter((p) => TAB_STAGES[t.value].includes(p.stage)).length])) as Record<StageTab, number>
   const rows = (q.data ?? []).filter((p) => TAB_STAGES[tab].includes(p.stage))
   const potential = rows.reduce((s, p) => s + Number(p.potential_value), 0)
-  const hasFilters = !!(filters.from || filters.to || filters.productId || filters.category || filters.customerId)
+  const [filtersOpen, setFiltersOpen] = React.useState(false)
+  const activeFilters = [filters.from, filters.to, filters.productId, filters.category, filters.customerId].filter(Boolean).length
+  const hasFilters = activeFilters > 0
+  const clearFilters = () => {
+    setFilters((f) => ({ sort: f.sort, ascending: f.ascending, category: '' }))
+    setCustomerSearch('')
+  }
 
   const toggleSort = (sort: PredictionFilters['sort']) =>
     setFilters((f) => ({ ...f, sort, ascending: f.sort === sort ? !f.ascending : sort === 'expected_date' }))
@@ -74,7 +81,20 @@ export function ReplenishmentPage() {
     <>
       <PageHeader title="Central de recompras" description="Oportunidades de recompra calculadas automaticamente a partir das compras." />
 
-      <Card className="mb-4 p-4">
+      <div className="mb-4 flex items-center gap-2 lg:hidden">
+        <Button variant="secondary" size="sm" onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen} aria-controls="recompras-filtros">
+          <SlidersHorizontal /> Filtros
+          {activeFilters > 0 && <span className="rounded-full bg-brand px-1.5 text-[11px] font-semibold text-brand-fg tabular">{activeFilters}</span>}
+          <ChevronDown className={cn('transition-transform', filtersOpen && 'rotate-180')} />
+        </Button>
+        {hasFilters && !filtersOpen && (
+          <Button variant="ghost" size="sm" onClick={clearFilters}>
+            <X /> Limpar
+          </Button>
+        )}
+      </div>
+
+      <Card id="recompras-filtros" className={cn('mb-4 p-4', !filtersOpen && 'hidden lg:block', filtersOpen && 'animate-fade-in')}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <Input type="date" aria-label="Previsão a partir de" value={filters.from ?? ''} onChange={(e) => setFilters((f) => ({ ...f, from: e.target.value || undefined }))} />
           <Input type="date" aria-label="Previsão até" value={filters.to ?? ''} onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value || undefined }))} />
@@ -98,7 +118,7 @@ export function ReplenishmentPage() {
           </div>
         </div>
         {hasFilters && (
-          <Button variant="ghost" size="sm" className="mt-3" onClick={() => { setFilters((f) => ({ sort: f.sort, ascending: f.ascending, category: '' })); setCustomerSearch('') }}>
+          <Button variant="ghost" size="sm" className="mt-3" onClick={clearFilters}>
             <X /> Limpar filtros
           </Button>
         )}
