@@ -12,7 +12,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:push": "supabase db push",
-    "functions:deploy": "supabase functions deploy billing-checkout && supabase functions deploy billing-webhook --no-verify-jwt"
+    "functions:deploy": "supabase functions deploy billing-checkout && supabase functions deploy billing-webhook --no-verify-jwt",
+    "demo:api": "node scripts/demo-server.mjs",
+    "demo:web": "vite --mode demo --port 5174"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.5",

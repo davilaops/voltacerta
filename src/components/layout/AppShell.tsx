@@ -25,7 +25,7 @@ import { Menu, MenuContent, MenuItem, MenuSeparator, MenuTrigger } from '@/compo
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useOrg } from '@/features/org/OrgProvider'
 import { PLANS, ROLE } from '@/domain/labels'
-import { isDevEnvironment } from '@/lib/supabase'
+import { isDemoMode, isDevEnvironment } from '@/lib/supabase'
 import { cn, initials } from '@/lib/utils'
 import { diffDaysISO } from '@/lib/dates'
 
@@ -239,7 +239,7 @@ export function AppShell() {
         </header>
         {isDevEnvironment && (
           <div className="border-b border-info/20 bg-info/5 px-4 py-1.5 text-center text-[11px] font-medium uppercase tracking-wider text-info lg:px-8">
-            Ambiente de desenvolvimento · pagamentos não são processados
+            {isDemoMode ? 'Modo demonstração · dados de exemplo, sem banco real' : 'Ambiente de desenvolvimento · pagamentos não são processados'}
           </div>
         )}
         <SubscriptionBanner />

@@ -198,6 +198,19 @@ npm run lint
 npm run build
 ```
 
+### Modo demonstração (sem Supabase)
+
+Para visualizar o painel sem banco, há uma API **falsa** com dados de exemplo (`scripts/demo-server.mjs`). Ela imita os endpoints do Supabase, mas **não** aplica RLS nem as regras do banco e as alterações não persistem. Use só para ver a interface.
+
+```bash
+npm run demo:api     # terminal 1 — API de exemplo na porta 54321
+```
+```bash
+npm run demo:web     # terminal 2 — app em http://localhost:5174 (usa .env.demo)
+```
+
+Login: `demo@voltacerta.test` / `demo1234`. O painel exibe a faixa "Modo demonstração".
+
 ## 11. Configurar produção
 
 1. Criar projeto Supabase (região São Paulo) e rodar `npx supabase db push`.
