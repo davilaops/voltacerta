@@ -1,0 +1,25 @@
+project_id = "voltacerta"
+
+[api]
+port = 54321
+schemas = ["public"]
+
+[db]
+port = 54322
+major_version = 15
+
+[auth]
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173/redefinir-senha"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+
+[auth.email]
+enable_signup = true
+enable_confirmations = true
+
+[functions.billing-webhook]
+verify_jwt = false
+
+[functions.billing-checkout]
+verify_jwt = true

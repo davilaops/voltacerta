@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /app
+Disallow: /onboarding
+Disallow: /redefinir-senha
+
+Sitemap: https://voltacerta.com.br/sitemap.xml
