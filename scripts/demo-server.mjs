@@ -301,6 +301,15 @@ const tables = {
   subscriptions: () => [],
 }
 
+// Tabelas base que aceitam escrita no modo demonstração (as views derivam delas)
+const writable = { products, customers, pets, message_templates: templates, organizations: [org] }
+const writeDefaults = {
+  products: { active: true, unit: 'un', category: 'outros', price: 0 },
+  customers: { marketing_consent: false, do_not_contact: false, notes: null, email: null },
+  pets: { species: 'cao', breed: null, birth_date: null, notes: null },
+  message_templates: { kind: 'custom', is_default: false },
+}
+
 function applyFilters(rows, params) {
   let out = rows
   for (const [key, raw] of params) {
@@ -419,12 +428,28 @@ const server = http.createServer(async (req, res) => {
       if (single) return page[0] ? send(res, 200, page[0], headers) : send(res, 406, { code: 'PGRST116', message: 'JSON object requested, multiple (or no) rows returned' })
       return send(res, 200, page, headers)
     }
-    // Escritas: aceitas e ecoadas (não persistem de forma consistente no modo demonstração)
+    // Escritas: persistem em memória enquanto o servidor estiver rodando
+    const store = writable[table]
     const row = Array.isArray(body) ? body[0] : body
-    const result = { id: randomUUID(), created_at: new Date().toISOString(), ...(row ?? {}) }
-    if (req.method === 'POST' && table === 'customers') customers.push({ ...result, phone_normalized: null, do_not_contact: false, marketing_consent: false, updated_at: result.created_at })
-    if (req.method === 'POST' && table === 'products') products.push({ ...result })
-    return send(res, req.method === 'POST' ? 201 : 200, single ? result : [result])
+    if (req.method === 'POST') {
+      const result = { id: randomUUID(), organization_id: ORG_ID, created_at: new Date().toISOString(), ...(writeDefaults[table] ?? {}), ...(row ?? {}) }
+      if (table === 'customers') result.phone_normalized = result.phone ? '55' + String(result.phone).replace(/\D/g, '').replace(/^55/, '') : null
+      store?.push(result)
+      return send(res, 201, single ? result : [result])
+    }
+    const targets = store ? applyFilters(store, url.searchParams) : []
+    if (req.method === 'PATCH') {
+      targets.forEach((t) => Object.assign(t, row, { updated_at: new Date().toISOString() }))
+      if (table === 'organizations') Object.assign(org, row)
+      return send(res, 200, single ? targets[0] ?? null : targets)
+    }
+    if (req.method === 'DELETE') {
+      if (table === 'products' && targets.some((t) => purchases.some((p) => p.purchase_items.some((i) => i.product_id === t.id))))
+        return send(res, 409, { code: '23503', message: 'update or delete on table "products" violates foreign key constraint' })
+      for (const t of targets) store.splice(store.indexOf(t), 1)
+      return send(res, 200, targets.map((t) => ({ id: t.id })))
+    }
+    return send(res, 405, { message: 'método não suportado no modo demonstração' })
   }
 
   send(res, 404, { message: 'not found' })

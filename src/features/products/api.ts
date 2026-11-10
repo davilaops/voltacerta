@@ -57,13 +57,13 @@ export function useSaveProduct() {
   const qc = useQueryClient()
   const { org } = useOrg()
   return useMutation({
-    mutationFn: async ({ id, values }: { id?: string; values: ProductInput }) => {
+    mutationFn: async ({ id, values }: { id?: string; values: ProductInput; successMessage?: string }) => {
       const row = { ...values, brand: values.brand || null, sku: values.sku || null, description: values.description || null }
       if (id) return unwrap(await supabase.from('products').update(row).eq('id', id).select().single()) as Product
       return unwrap(await supabase.from('products').insert({ ...row, organization_id: org.id }).select().single()) as Product
     },
     onSuccess: (_, v) => {
-      toast.success(v.id ? 'Produto atualizado.' : 'Produto cadastrado.')
+      toast.success(v.successMessage ?? (v.id ? 'Produto atualizado.' : 'Produto cadastrado.'))
       qc.invalidateQueries({ queryKey: ['products'] })
     },
     onError: (e) => toast.error(errorMessage(e)),

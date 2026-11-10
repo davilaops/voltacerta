@@ -41,6 +41,9 @@ export function ProductsPage() {
         name: p.name, category: p.category, brand: p.brand ?? '', sku: p.sku ?? '', price: Number(p.price), cost: p.cost == null ? null : Number(p.cost),
         size_value: p.size_value == null ? null : Number(p.size_value), unit: p.unit, description: p.description ?? '', avg_duration_days: p.avg_duration_days, active: !p.active,
       },
+      successMessage: p.active
+        ? `${p.name} desativado. Ele não aparece mais no registro de compras e fica no filtro "Inativos".`
+        : `${p.name} ativado novamente.`,
     })
 
   const remove = async (p: Product) => {
