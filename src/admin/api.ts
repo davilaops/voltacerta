@@ -17,6 +17,7 @@ export interface AdminOverview {
   subscriptions_past_due: number
   subscriptions_canceled: number
   mrr_received_cents: number
+  test_received_cents?: number
   signups: { date: string; organizations: number; users: number }[]
 }
 
@@ -46,6 +47,7 @@ export interface AdminPayment {
   provider_payment_id: string
   plan: PlanTier | null
   amount_cents: number
+  dev_mode?: boolean
   status: 'pending' | 'paid' | 'failed' | 'refunded' | 'canceled'
   paid_at: string | null
   period_start: string | null

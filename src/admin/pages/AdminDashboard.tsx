@@ -46,7 +46,7 @@ export function AdminDashboard() {
                 <Kpi label="Estabelecimentos" icon={Building2} value={formatNumber(o.organizations_total)} hint={o.organizations_suspended ? `${o.organizations_suspended} suspenso(s)` : 'Nenhum suspenso'} to="/estabelecimentos" />
                 <Kpi label="Usuários" icon={UserRound} value={formatNumber(o.users_total)} hint={o.users_blocked ? `${o.users_blocked} bloqueado(s)` : 'Nenhum bloqueado'} to="/usuarios" />
                 <Kpi label="Assinaturas ativas" icon={CreditCard} value={formatNumber(o.subscriptions_active)} tone="size-4 text-brand" to="/assinaturas" />
-                <Kpi label="Receita recebida (30 dias)" icon={CircleDollarSign} value={formatCents(o.mrr_received_cents)} hint="Somente pagamentos confirmados" tone="size-4 text-brand" />
+                <Kpi label="Receita recebida (30 dias)" icon={CircleDollarSign} value={formatCents(o.mrr_received_cents)} hint={o.test_received_cents ? `Somente pagamentos reais · ${formatCents(o.test_received_cents)} em modo teste fora da conta` : 'Somente pagamentos confirmados'} tone="size-4 text-brand" />
                 <Kpi label="Trials ativos" icon={Hourglass} value={formatNumber(o.trials_active)} />
                 <Kpi label="Trials encerrados" icon={Clock} value={formatNumber(o.trials_ended)} hint="Sem conversão em assinatura" />
                 <Kpi label="Assinaturas atrasadas" icon={AlertTriangle} value={formatNumber(o.subscriptions_past_due)} tone="size-4 text-warning" />

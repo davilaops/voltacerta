@@ -68,7 +68,7 @@ export function AdminSubscriptions() {
                       <td className="tabular">{formatDate(p.paid_at ?? p.created_at)}</td>
                       <td>{p.organization_name ?? '—'}</td>
                       <td>{p.plan ? PLAN_NAME[p.plan] : '—'}</td>
-                      <td className="tabular">{formatCents(p.amount_cents)}</td>
+                      <td className="tabular">{formatCents(p.amount_cents)}{p.dev_mode && <Badge tone="muted" className="ml-2">Teste</Badge>}</td>
                       <td><Badge tone={PAYMENT_STATUS[p.status].tone}>{PAYMENT_STATUS[p.status].label}</Badge></td>
                       <td className="max-w-40 truncate font-mono text-xs text-muted">{p.provider}:{p.provider_payment_id}</td>
                     </tr>

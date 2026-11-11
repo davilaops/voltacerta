@@ -176,3 +176,22 @@ describe('billing_apply_event (banco, PGlite)', () => {
     expect(await other.user.query('select id from public.payment_events')).toHaveLength(0)
   })
 })
+
+describe('pagamentos de modo teste (0008)', () => {
+  it('pagamento de teste é marcado e não entra na receita do painel; o real entra', async () => {
+    const db = await createDb()
+    const org = await setupOrg(db, 'receita@loja.com', 'Loja Receita')
+    const adminId = await db.createUser('root@voltacerta.com.br')
+    await db.admin.query(`select public.promote_super_admin('root@voltacerta.com.br')`)
+    await db.admin.query(`insert into public.billing_checkouts (organization_id, plan, provider, provider_checkout_id, amount_cents, dev_mode) values
+      ($1, 'profissional', 'abacatepay', 'bill_dev', 6990, true), ($1, 'profissional', 'abacatepay', 'bill_prod', 6990, false)`, [org.orgId])
+    const apply = (ev: BillingEvent) => db.admin.query('select public.billing_apply_event($1::jsonb)', [JSON.stringify(ev)])
+    await apply(parseAbacateEvent(subEvent('subscription.completed', { id: 'log_dev', checkout: 'bill_dev', payment: 'pay_dev', dev: true })))
+    await apply(parseAbacateEvent(subEvent('subscription.renewed', { id: 'log_prod', checkout: 'bill_prod', payment: 'pay_prod', dev: false })))
+    const pays = await db.admin.query<{ provider_payment_id: string; dev_mode: boolean }>('select provider_payment_id, dev_mode from public.payments order by provider_payment_id')
+    expect(pays).toEqual([{ provider_payment_id: 'pay_dev', dev_mode: true }, { provider_payment_id: 'pay_prod', dev_mode: false }])
+    const [o] = await db.as(adminId).query<{ r: { mrr_received_cents: number; test_received_cents: number } }>(`select public.admin_overview(current_date - 7, current_date) as r`)
+    expect(o.r.mrr_received_cents).toBe(6990)
+    expect(o.r.test_received_cents).toBe(6990)
+  })
+})
