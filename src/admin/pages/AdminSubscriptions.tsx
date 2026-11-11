@@ -1,13 +1,13 @@
 import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CreditCard, Receipt } from 'lucide-react'
+import { CreditCard, Receipt, XCircle } from 'lucide-react'
 import { Badge, Card, CardHeader } from '@/components/ui/card'
 import { Select } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/menu'
 import { DataTable, EmptyState, ErrorState, PageHeader, TableSkeleton } from '@/components/ui/states'
 import { Pagination } from '@/components/shared/Pagination'
 import { ADMIN_PAGE, PAYMENT_STATUS, useAdminOrganizations, useAdminPayments } from '../api'
-import { ORG_STATUS_FILTERS, OrgStatusBadge } from '../components'
+import { CancelSubscriptionDialog, ORG_STATUS_FILTERS, OrgStatusBadge, type OrgRef } from '../components'
 import { formatCents } from '@/features/billing/plans'
 import { PLAN_NAME } from '@/domain/labels'
 import { formatDate } from '@/lib/format'
@@ -19,6 +19,7 @@ export function AdminSubscriptions() {
   const [status, setStatus] = React.useState('')
   const [page, setPage] = React.useState(0)
   const [payPage, setPayPage] = React.useState(0)
+  const [cancelOrg, setCancelOrg] = React.useState<OrgRef>(null)
   const subs = useAdminOrganizations('', status, page)
   const payments = useAdminPayments(payPage)
   React.useEffect(() => setPage(0), [status])
@@ -42,7 +43,7 @@ export function AdminSubscriptions() {
               <EmptyState icon={CreditCard} title="Nenhuma assinatura" description="Ajuste o filtro de status." />
             ) : (
               <>
-                <DataTable head={<><th>Estabelecimento</th><th>Plano</th><th>Status</th><th>Fim do teste</th><th>Período pago até</th></>}>
+                <DataTable head={<><th>Estabelecimento</th><th>Plano</th><th>Status</th><th>Fim do teste</th><th>Período pago até</th><th className="w-24"><span className="sr-only">Ações</span></th></>}>
                   {subs.data.rows.map((o) => (
                     <tr key={o.id} className="cursor-pointer" onClick={() => navigate(`/estabelecimentos/${o.id}`)}>
                       <td><div className="font-medium">{o.name}</div><div className="text-xs text-muted">{o.owner_email}</div></td>
@@ -50,6 +51,13 @@ export function AdminSubscriptions() {
                       <td><OrgStatusBadge status={o.effective_status} suspended={!!o.suspended_at} /></td>
                       <td className="tabular text-muted">{formatDate(o.trial_ends_at)}</td>
                       <td className="tabular text-muted">{formatDate(o.current_period_end)}</td>
+                      <td className="text-right">
+                        {o.effective_status !== 'canceled' && o.effective_status !== 'expired' && (
+                          <button type="button" title="Encerrar assinatura" className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-subtle hover:bg-danger/10 hover:text-danger" onClick={(e) => { e.stopPropagation(); setCancelOrg({ id: o.id, name: o.name }) }}>
+                            <XCircle className="size-3.5" /> Encerrar
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </DataTable>
@@ -80,6 +88,7 @@ export function AdminSubscriptions() {
           </TabsContent>
         </Tabs>
       </Card>
+      <CancelSubscriptionDialog org={cancelOrg} onClose={() => setCancelOrg(null)} />
       <Card className="mt-4">
         <CardHeader title="Sobre o status" description="“Em teste” e “Expirada” são calculados no banco a partir da data de fim do teste. “Ativa” só é definida por pagamento confirmado pelo gateway." />
       </Card>

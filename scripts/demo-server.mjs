@@ -389,6 +389,14 @@ const server = http.createServer(async (req, res) => {
   if (path.startsWith('/auth/v1/')) return send(res, 200, {})
 
   // Functions
+  if (path === '/functions/v1/admin-cancel-subscription') {
+    try {
+      adminDemo.rpc.admin_cancel_subscription({ p_org: body?.organization_id, p_reason: body?.reason, p_provider_result: 'demo: sem gateway' })
+      return send(res, 200, { ok: true, provider_result: 'Modo demonstração: nenhuma cobrança real foi cancelada.' })
+    } catch (e) {
+      return send(res, e.status ?? 400, { error: e.message })
+    }
+  }
   if (path.startsWith('/functions/v1/')) return send(res, 503, { error: 'BILLING_NOT_CONFIGURED' })
 
   // RPC

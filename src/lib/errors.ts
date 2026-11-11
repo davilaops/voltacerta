@@ -32,6 +32,9 @@ const MESSAGES: Record<string, string> = {
   BILLING_PROVIDER_ERROR: 'Não foi possível abrir o pagamento agora. Tente novamente em instantes.',
   ALREADY_SUBSCRIBED: 'Você já assina este plano.',
   PLAN_CHANGE_REQUIRES_SUPPORT: 'Você já tem uma assinatura ativa. Para trocar de plano, fale com o suporte.',
+  CONFIRMATION_MISMATCH: 'O nome digitado não confere com o do estabelecimento.',
+  SUBSCRIPTION_ACTIVE: 'Há uma assinatura paga em vigor. Encerre a assinatura antes de excluir.',
+  PROVIDER_CANCEL_FAILED: 'A AbacatePay não confirmou o cancelamento. Nada foi alterado; tente novamente.',
   ORG_SUSPENDED: 'Este estabelecimento está suspenso.',
 }
 

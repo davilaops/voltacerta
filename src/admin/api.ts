@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { rpc } from '@/lib/supabase'
+import { rpc, supabase } from '@/lib/supabase'
 import { errorMessage } from '@/lib/errors'
 import type { MemberRole, PlanTier, SubscriptionStatus } from '@/types/models'
 
@@ -171,6 +171,8 @@ export const ACTION_LABEL: Record<string, string> = {
   block_user: 'Bloqueou usuário',
   unblock_user: 'Desbloqueou usuário',
   update_plan: 'Editou plano',
+  cancel_subscription: 'Encerrou assinatura',
+  delete_organization: 'Excluiu estabelecimento',
 }
 
 export const PAYMENT_STATUS: Record<AdminPayment['status'], { label: string; tone: 'brand' | 'warning' | 'danger' | 'muted' }> = {
@@ -179,4 +181,47 @@ export const PAYMENT_STATUS: Record<AdminPayment['status'], { label: string; ton
   failed: { label: 'Falhou', tone: 'danger' },
   refunded: { label: 'Estornado', tone: 'muted' },
   canceled: { label: 'Cancelado', tone: 'muted' },
+}
+
+/** Encerra a assinatura: cancela na AbacatePay (Edge Function) e depois no banco. */
+export function useCancelSubscription() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (v: { orgId: string; reason: string }) => {
+      const { data, error } = await supabase.functions.invoke<{ ok?: boolean; provider_result?: string; error?: string }>(
+        'admin-cancel-subscription',
+        { body: { organization_id: v.orgId, reason: v.reason } },
+      )
+      if (error) {
+        let code = error.message
+        try {
+          const body = await (error as { context?: Response }).context?.json()
+          if (body?.error) code = body.error
+        } catch {
+          /* corpo indisponível */
+        }
+        throw new Error(code)
+      }
+      return data
+    },
+    onSuccess: (data) => {
+      toast.success('Assinatura encerrada.', { description: data?.provider_result })
+      qc.invalidateQueries({ queryKey: ['admin'] })
+    },
+    onError: (e) => toast.error(errorMessage(e)),
+  })
+}
+
+/** Exclusão definitiva do estabelecimento (exige o nome digitado). */
+export function useDeleteOrganization() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (v: { orgId: string; reason: string; confirmName: string }) =>
+      rpc<void>('admin_delete_organization', { p_org: v.orgId, p_reason: v.reason, p_confirm_name: v.confirmName }),
+    onSuccess: () => {
+      toast.success('Estabelecimento excluído.')
+      qc.invalidateQueries({ queryKey: ['admin'] })
+    },
+    onError: (e) => toast.error(errorMessage(e)),
+  })
 }

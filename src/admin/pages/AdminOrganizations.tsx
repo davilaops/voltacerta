@@ -1,12 +1,12 @@
 import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Building2, ChevronRight, Search } from 'lucide-react'
+import { Building2, ChevronRight, Search, Trash2 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Input, Select } from '@/components/ui/input'
 import { DataTable, EmptyState, ErrorState, PageHeader, TableSkeleton } from '@/components/ui/states'
 import { Pagination } from '@/components/shared/Pagination'
 import { ADMIN_PAGE, useAdminOrganizations } from '../api'
-import { ORG_STATUS_FILTERS, OrgStatusBadge } from '../components'
+import { DeleteOrgDialog, ORG_STATUS_FILTERS, OrgStatusBadge, type OrgRef } from '../components'
 import { PLAN_NAME } from '@/domain/labels'
 import { formatDate, formatNumber } from '@/lib/format'
 import { useDebounce } from '@/lib/useDebounce'
@@ -21,6 +21,7 @@ export function AdminOrganizations() {
   const [page, setPage] = React.useState(0)
   const debounced = useDebounce(search)
   const q = useAdminOrganizations(debounced, status, page)
+  const [deleteOrg, setDeleteOrg] = React.useState<OrgRef>(null)
   React.useEffect(() => setPage(0), [debounced, status])
 
   return (
@@ -47,7 +48,7 @@ export function AdminOrganizations() {
         ) : (
           <>
             <DataTable
-              head={<><th>Estabelecimento</th><th>Proprietário</th><th>Plano</th><th>Status</th><th>Vencimento</th><th className="text-right">Usuários</th><th className="text-right">Clientes</th><th>Cadastro</th></>}
+              head={<><th>Estabelecimento</th><th>Proprietário</th><th>Plano</th><th>Status</th><th>Vencimento</th><th className="text-right">Usuários</th><th className="text-right">Clientes</th><th>Cadastro</th><th className="w-10"><span className="sr-only">Ações</span></th></>}
               mobile={q.data.rows.map((o) => (
                 <button key={o.id} onClick={() => navigate(`/estabelecimentos/${o.id}`)} className="flex w-full items-center gap-3 px-4 py-3.5 text-left">
                   <div className="min-w-0 flex-1">
@@ -72,6 +73,11 @@ export function AdminOrganizations() {
                   <td className="text-right tabular">{formatNumber(o.members)}</td>
                   <td className="text-right tabular">{formatNumber(o.customers)}</td>
                   <td className="tabular text-muted">{formatDate(o.created_at)}</td>
+                  <td className="text-right">
+                    <button type="button" aria-label={`Excluir ${o.name}`} title="Excluir estabelecimento" className="rounded-md p-1.5 text-subtle hover:bg-danger/10 hover:text-danger" onClick={(e) => { e.stopPropagation(); setDeleteOrg({ id: o.id, name: o.name }) }}>
+                      <Trash2 className="size-4" />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </DataTable>
@@ -79,6 +85,7 @@ export function AdminOrganizations() {
           </>
         )}
       </Card>
+      <DeleteOrgDialog org={deleteOrg} onClose={() => setDeleteOrg(null)} />
     </>
   )
 }

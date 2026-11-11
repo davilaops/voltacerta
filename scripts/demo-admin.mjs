@@ -128,6 +128,22 @@ export function createAdminDemo({ today, addDays, ts, mainOrg, mainUser, custome
       log('update_plan', 'plan', p.id, r, { price_cents: { from: p.price_cents, to: b.p_price_cents } })
       p.price_cents = b.p_price_cents; p.customer_limit = b.p_customer_limit
     },
+    admin_cancel_subscription: (b) => {
+      const r = reason(b.p_reason); const o = find(b.p_org)
+      if (['canceled', 'expired'].includes(effective(o.sub))) throw Object.assign(new Error('INVALID_STATUS_TRANSITION'), { status: 400 })
+      const now = new Date().toISOString()
+      o.sub.status = 'canceled'; o.sub.current_period_end = now
+      log('cancel_subscription', 'subscription', o.id, r, { provider_result: b.p_provider_result ?? 'demo' })
+      return { ok: true }
+    },
+    admin_delete_organization: (b) => {
+      const r = reason(b.p_reason); const o = find(b.p_org)
+      if ((b.p_confirm_name ?? '').trim() !== o.name.trim()) throw Object.assign(new Error('CONFIRMATION_MISMATCH'), { status: 400 })
+      if (o.sub.status === 'active' && o.sub.current_period_end && new Date(o.sub.current_period_end) > new Date()) throw Object.assign(new Error('SUBSCRIPTION_ACTIVE'), { status: 400 })
+      orgs.splice(orgs.indexOf(o), 1)
+      log('delete_organization', 'organization', o.id, r, { name: o.name })
+      return { ok: true }
+    },
   }
   return { rpc }
 }

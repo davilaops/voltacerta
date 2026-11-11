@@ -68,6 +68,9 @@ Um webhook criado em modo teste recebe apenas eventos de teste.
 2. No checkout de teste, use o cartão `4242 4242 4242 4242` (qualquer validade futura e qualquer CVV) ou o botão **Simular Pagamento**.
 3. Ao voltar, a situação deve mudar para **Ativa**. Confira em **Admin → Assinaturas → Pagamentos** e em `payment_events` (a coluna `error` deve estar vazia).
 
+### Permissões da chave
+Inclua também `SUBSCRIPTION:DELETE` na chave (teste e produção): é usada pelo botão **Encerrar assinatura** do painel admin (Edge Function `admin-cancel-subscription`), que cancela na AbacatePay antes de encerrar no banco.
+
 ### 6. Produção
 1. Crie uma chave `abc_prod_` e um webhook novo **fora** do Modo Teste.
 2. Troque os segredos: `ABACATEPAY_API_KEY=abc_prod_...` e `APP_URL=https://app.voltacerta.com.br`.

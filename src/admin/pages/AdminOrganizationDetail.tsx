@@ -1,12 +1,12 @@
 import * as React from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Ban, CalendarPlus, Building2, PlayCircle, Repeat } from 'lucide-react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, Ban, CalendarPlus, Building2, PlayCircle, Repeat, Trash2, XCircle } from 'lucide-react'
 import { Badge, Card, CardBody, CardHeader, Skeleton } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Field, Input, Select } from '@/components/ui/input'
 import { DataTable, EmptyState, ErrorState } from '@/components/ui/states'
 import { ACTION_LABEL, PAYMENT_STATUS, useAdminAction, useAdminOrganization } from '../api'
-import { OrgStatusBadge, ReasonDialog } from '../components'
+import { CancelSubscriptionDialog, DeleteOrgDialog, OrgStatusBadge, ReasonDialog, type OrgRef } from '../components'
 import { formatCents, usePlans } from '@/features/billing/plans'
 import { BUSINESS_TYPE, PLAN_NAME, ROLE } from '@/domain/labels'
 import { formatDate, formatDateTime, formatNumber, formatPhone } from '@/lib/format'
@@ -20,6 +20,9 @@ export function AdminOrganizationDetail() {
   const q = useAdminOrganization(id)
   const plans = usePlans()
   const [action, setAction] = React.useState<Action>(null)
+  const [cancelOrg, setCancelOrg] = React.useState<OrgRef>(null)
+  const [deleteOrg, setDeleteOrg] = React.useState<OrgRef>(null)
+  const navigate = useNavigate()
   const [days, setDays] = React.useState('14')
   const [plan, setPlan] = React.useState<PlanTier>('profissional')
   useDocumentTitle(q.data ? `Admin · ${q.data.organization.name}` : 'Admin · Estabelecimento')
@@ -56,8 +59,9 @@ export function AdminOrganizationDetail() {
           {suspended ? (
             <Button variant="secondary" onClick={() => setAction('reactivate')}><PlayCircle /> Reativar</Button>
           ) : (
-            <Button variant="danger" onClick={() => setAction('suspend')}><Ban /> Suspender</Button>
+            <Button variant="secondary" onClick={() => setAction('suspend')}><Ban /> Suspender</Button>
           )}
+          <Button variant="danger" onClick={() => setDeleteOrg({ id: o.id, name: o.name })}><Trash2 /> Excluir</Button>
         </div>
       </div>
 
@@ -76,6 +80,9 @@ export function AdminOrganizationDetail() {
                 <div className="flex gap-2">
                   <Button size="sm" variant="secondary" onClick={() => setAction('trial')} disabled={s?.status === 'active'} title={s?.status === 'active' ? 'Assinatura paga ativa' : undefined}><CalendarPlus /> Conceder teste</Button>
                   <Button size="sm" variant="secondary" onClick={() => { setPlan(s?.plan ?? 'profissional'); setAction('plan') }}><Repeat /> Alterar plano</Button>
+                  {s && s.effective_status !== 'canceled' && s.effective_status !== 'expired' && (
+                    <Button size="sm" variant="danger" onClick={() => setCancelOrg({ id: o.id, name: o.name })}><XCircle /> Encerrar</Button>
+                  )}
                 </div>
               }
             />
@@ -156,6 +163,8 @@ export function AdminOrganizationDetail() {
         </div>
       </div>
 
+      <CancelSubscriptionDialog org={cancelOrg} onClose={() => setCancelOrg(null)} />
+      <DeleteOrgDialog org={deleteOrg} onClose={() => setDeleteOrg(null)} onDeleted={() => navigate('/estabelecimentos', { replace: true })} />
       <ReasonDialog open={action === 'suspend'} onOpenChange={(o2) => !o2 && close()} danger title="Suspender estabelecimento"
         description="Os usuários continuam vendo os dados, mas não conseguem registrar nada até a reativação."
         confirmLabel="Suspender" loading={suspend.isPending} onConfirm={(r) => suspend.mutate(r, { onSuccess: close })} />

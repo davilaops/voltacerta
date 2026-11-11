@@ -229,3 +229,61 @@ describe('permissões de funções (0006)', () => {
     expect(await db.as(null).query('select id from public.plans')).toHaveLength(3)
   })
 })
+
+describe('admin: encerrar assinatura e excluir estabelecimento (0009)', () => {
+  let root: string
+  beforeAll(async () => {
+    root = await db.createUser('root2@voltacerta.com.br')
+    await db.admin.query(`select public.promote_super_admin('root2@voltacerta.com.br')`)
+  })
+
+  it('usuário comum recebe FORBIDDEN; justificativa é obrigatória', async () => {
+    const t = await setupOrg(db, 'alvo1@loja.com', 'Loja Alvo 1')
+    await expect(t.user.query(`select public.admin_cancel_subscription($1, 'motivo qualquer')`, [t.orgId])).rejects.toThrow(/FORBIDDEN/)
+    await expect(t.user.query(`select public.admin_delete_organization($1, 'motivo qualquer', 'Loja Alvo 1')`, [t.orgId])).rejects.toThrow(/FORBIDDEN/)
+    await expect(db.as(root).query(`select public.admin_cancel_subscription($1, 'x')`, [t.orgId])).rejects.toThrow(/REASON_REQUIRED/)
+  })
+
+  it('encerrar assinatura corta a escrita na hora e fica auditado; não dá para encerrar duas vezes', async () => {
+    const t = await setupOrg(db, 'alvo2@loja.com', 'Loja Alvo 2')
+    await db.as(root).query(`select public.admin_cancel_subscription($1, 'Pedido do cliente', 'abacatepay: cancelada')`, [t.orgId])
+    const [s] = await db.admin.query<{ eff: string; w: boolean }>(`select public.subscription_effective_status($1)::text as eff, public.org_can_write($1) as w`, [t.orgId])
+    expect(s).toEqual({ eff: 'canceled', w: false })
+    await expect(t.user.query(`insert into public.customers (organization_id, full_name) values ($1, 'Novo Cliente')`, [t.orgId])).rejects.toThrow()
+    await expect(db.as(root).query(`select public.admin_cancel_subscription($1, 'De novo agora')`, [t.orgId])).rejects.toThrow(/INVALID_STATUS_TRANSITION/)
+    const [log] = await db.admin.query<{ action: string; reason: string; details: Record<string, string> }>(`select action, reason, details from public.admin_audit_logs where target_id = $1 order by id desc limit 1`, [t.orgId])
+    expect(log).toMatchObject({ action: 'cancel_subscription', reason: 'Pedido do cliente', details: { provider_result: 'abacatepay: cancelada' } })
+  })
+
+  it('excluir exige o nome exato e bloqueia assinatura paga em vigor no gateway', async () => {
+    const t = await setupOrg(db, 'alvo3@loja.com', 'Loja Alvo 3')
+    await expect(db.as(root).query(`select public.admin_delete_organization($1, 'Encerrou atividades', 'Loja Errada')`, [t.orgId])).rejects.toThrow(/CONFIRMATION_MISMATCH/)
+    await db.admin.query(`update public.subscriptions set status = 'active', provider = 'abacatepay', provider_subscription_id = 'subs_vigente', current_period_end = now() + interval '20 days' where organization_id = $1`, [t.orgId])
+    await expect(db.as(root).query(`select public.admin_delete_organization($1, 'Encerrou atividades', 'Loja Alvo 3')`, [t.orgId])).rejects.toThrow(/SUBSCRIPTION_ACTIVE/)
+  })
+
+  it('exclui o estabelecimento com todos os dados, preserva a conta do usuário e o histórico financeiro', async () => {
+    const t = await setupOrg(db, 'alvo4@loja.com', 'Loja Alvo 4')
+    const [c] = await t.user.query<{ id: string }>(`insert into public.customers (organization_id, full_name) values ($1, 'Cliente Apagar') returning id`, [t.orgId])
+    const [p] = await t.user.query<{ id: string }>(`insert into public.products (organization_id, name, category, price, avg_duration_days) values ($1, 'Ração Apagar', 'racoes', 100, 30) returning id`, [t.orgId])
+    await t.user.query(`insert into public.pets (organization_id, customer_id, name) values ($1, $2, 'Totó')`, [t.orgId, c.id])
+    await t.user.query(`select public.create_purchase($1, $2, current_date - 1, $3::jsonb)`, [t.orgId, c.id, JSON.stringify([{ product_id: p.id, quantity: 1 }])])
+    await t.user.query(`select public.log_contact($1, $2, 'respondeu')`, [t.orgId, c.id])
+    await db.admin.query(`insert into public.payment_events (provider, event_id, event_type, organization_id, payload) values ('abacatepay', 'log_hist', 'subscription.completed', $1, '{}')`, [t.orgId])
+    await db.admin.query(`insert into public.payments (organization_id, provider, provider_payment_id, amount_cents, status) values ($1, 'abacatepay', 'pay_hist', 3990, 'paid')`, [t.orgId])
+
+    await db.as(root).query(`select public.admin_delete_organization($1, 'Encerrou atividades', '  Loja Alvo 4 ')`, [t.orgId])
+
+    for (const table of ['organizations', 'customers', 'products', 'pets', 'purchases', 'replenishment_predictions', 'contact_logs', 'subscriptions', 'organization_members', 'message_templates']) {
+      const col = table === 'organizations' ? 'id' : 'organization_id'
+      const [r] = await db.admin.query<{ n: number }>(`select count(*)::int as n from public.${table} where ${col} = $1`, [t.orgId])
+      expect(r.n, table).toBe(0)
+    }
+    const [u] = await db.admin.query<{ n: number }>(`select count(*)::int as n from auth.users where id = $1`, [t.userId])
+    expect(u.n).toBe(1)
+    const [pay] = await db.admin.query<{ organization_id: string | null }>(`select organization_id from public.payments where provider_payment_id = 'pay_hist'`)
+    expect(pay.organization_id).toBeNull()
+    const [log] = await db.admin.query<{ details: Record<string, unknown> }>(`select details from public.admin_audit_logs where action = 'delete_organization' and target_id = $1`, [t.orgId])
+    expect(log.details).toMatchObject({ name: 'Loja Alvo 4', owner_email: 'alvo4@loja.com', customers: 1, purchases: 1 })
+  })
+})
