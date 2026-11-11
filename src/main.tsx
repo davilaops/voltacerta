@@ -8,10 +8,16 @@ import { ConfirmProvider } from '@/components/ui/dialog'
 import { isAuthError } from '@/lib/errors'
 import { supabase } from '@/lib/supabase'
 import { isAdminEntry } from '@/lib/hosts'
+import { reloadForNewVersion } from '@/lib/chunkReload'
 import { FullscreenLoader } from '@/features/org/OrgProvider'
 import './index.css'
 
 // Painel Super Admin: entrada, roteamento e bundle próprios (admin.voltacerta.com.br ou /admin em dev)
+// Vite dispara este evento quando um arquivo de uma versão antiga não existe mais
+window.addEventListener('vite:preloadError', (event) => {
+  if (reloadForNewVersion()) event.preventDefault()
+})
+
 const AdminRoot = lazy(() => import('@/admin/AdminRoot').then((m) => ({ default: m.AdminRoot })))
 const adminEntry = isAdminEntry(window.location.pathname)
 

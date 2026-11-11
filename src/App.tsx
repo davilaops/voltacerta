@@ -12,6 +12,7 @@ import { NotFoundPage, PrivacyPage, TermsPage } from '@/pages/LegalPages'
 import { isSupabaseConfigured } from '@/lib/supabase'
 import { APP_URL, surface } from '@/lib/hosts'
 import { BlockedScreen, useAccountStatus } from '@/features/auth/accountStatus'
+import { isChunkLoadError, reloadForNewVersion } from '@/lib/chunkReload'
 
 // Rotas do painel carregadas sob demanda (bundle inicial menor para a landing)
 const lazyNamed = <T extends Record<string, React.ComponentType>>(loader: () => Promise<T>, name: keyof T) =>
@@ -77,6 +78,8 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
   }
   componentDidCatch(error: Error) {
     console.error('[VoltaCerta] Erro não tratado:', error)
+    // Aba aberta antes de uma nova publicação: busca a versão nova automaticamente
+    if (isChunkLoadError(error)) reloadForNewVersion()
   }
   render() {
     if (!this.state.error) return this.props.children
@@ -87,6 +90,7 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
           <h1 className="mt-4 text-lg font-semibold">Algo deu errado</h1>
           <p className="mt-2 text-sm text-muted">Recarregue a página. Se o problema continuar, fale com o suporte.</p>
           <Button className="mt-6" onClick={() => window.location.reload()}>Recarregar</Button>
+          <p className="mx-auto mt-6 max-w-md break-words font-mono text-[11px] text-subtle">{(this.state.error as Error | null)?.message?.slice(0, 200)}</p>
         </div>
       </div>
     )
