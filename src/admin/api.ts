@@ -173,6 +173,7 @@ export const ACTION_LABEL: Record<string, string> = {
   update_plan: 'Editou plano',
   cancel_subscription: 'Encerrou assinatura',
   delete_organization: 'Excluiu estabelecimento',
+  delete_user: 'Excluiu usuário',
 }
 
 export const PAYMENT_STATUS: Record<AdminPayment['status'], { label: string; tone: 'brand' | 'warning' | 'danger' | 'muted' }> = {

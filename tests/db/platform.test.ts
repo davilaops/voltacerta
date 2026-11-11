@@ -287,3 +287,47 @@ describe('admin: encerrar assinatura e excluir estabelecimento (0009)', () => {
     expect(log.details).toMatchObject({ name: 'Loja Alvo 4', owner_email: 'alvo4@loja.com', customers: 1, purchases: 1 })
   })
 })
+
+describe('admin: excluir usuário (0010)', () => {
+  let root: string
+  beforeAll(async () => {
+    root = await db.createUser('root3@voltacerta.com.br')
+    await db.admin.query(`select public.promote_super_admin('root3@voltacerta.com.br')`)
+  })
+  const del = (as: string, user: string, email: string, reason = 'Pedido do titular') =>
+    db.as(as).query(`select public.admin_delete_user($1, $2, $3)`, [user, reason, email])
+
+  it('usuário comum não exclui ninguém; regras de proteção', async () => {
+    const t = await setupOrg(db, 'dono-del@loja.com', 'Loja Del')
+    const other = await db.createUser('qualquer@loja.com')
+    await expect(del(t.userId, other, 'qualquer@loja.com')).rejects.toThrow(/FORBIDDEN/)
+    await expect(del(root, root, 'root3@voltacerta.com.br')).rejects.toThrow(/CANNOT_DELETE_SELF/)
+    await expect(del(root, adminId, 'admin@voltacerta.com.br')).resolves.toBeDefined() // revogado antes: não é mais admin
+    const admin2 = await db.createUser('admin2@voltacerta.com.br')
+    await db.admin.query(`select public.promote_super_admin('admin2@voltacerta.com.br')`)
+    await expect(del(root, admin2, 'admin2@voltacerta.com.br')).rejects.toThrow(/CANNOT_DELETE_ADMIN/)
+    await expect(del(root, other, 'outro@email.com')).rejects.toThrow(/CONFIRMATION_MISMATCH/)
+    await expect(del(root, t.userId, 'dono-del@loja.com')).rejects.toThrow(/USER_OWNS_ORGANIZATION/)
+  })
+
+  it('exclui funcionário: some do estabelecimento, dados criados por ele ficam sem autor, auditoria registra', async () => {
+    const t = await setupOrg(db, 'dono-del2@loja.com', 'Loja Del 2')
+    const emp = await db.createUser('func-del@loja.com')
+    await db.admin.query(`insert into public.organization_members values ($1, $2, 'employee')`, [t.orgId, emp])
+    const [c] = await db.as(emp).query<{ id: string }>(`insert into public.customers (organization_id, full_name) values ($1, 'Cliente do Func') returning id`, [t.orgId])
+    await db.as(emp).query(`select public.log_contact($1, $2, 'respondeu')`, [t.orgId, c.id])
+
+    await del(root, emp, '  FUNC-DEL@loja.com ')
+
+    const [u] = await db.admin.query<{ n: number }>(`select count(*)::int as n from auth.users where id = $1`, [emp])
+    expect(u.n).toBe(0)
+    expect(await db.admin.query(`select 1 from public.organization_members where user_id = $1`, [emp])).toHaveLength(0)
+    expect(await db.admin.query(`select 1 from public.profiles where id = $1`, [emp])).toHaveLength(0)
+    const [cl] = await db.admin.query<{ user_id: string | null }>(`select user_id from public.contact_logs where customer_id = $1`, [c.id])
+    expect(cl.user_id).toBeNull()
+    expect(await t.user.query(`select id from public.customers where id = $1`, [c.id])).toHaveLength(1)
+    const [log] = await db.admin.query<{ details: { email: string; organizations: { role: string }[] } }>(`select details from public.admin_audit_logs where action = 'delete_user' and target_id = $1`, [emp])
+    expect(log.details.email).toBe('func-del@loja.com')
+    expect(log.details.organizations[0].role).toBe('employee')
+  })
+})

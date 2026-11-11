@@ -1,9 +1,9 @@
 import * as React from 'react'
 import { Link } from 'react-router-dom'
-import { Lock, LockOpen, Search, ShieldCheck, Users } from 'lucide-react'
+import { Lock, LockOpen, Search, ShieldCheck, Trash2, Users } from 'lucide-react'
 import { Badge, Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Field, Input } from '@/components/ui/input'
 import { DataTable, EmptyState, ErrorState, PageHeader, TableSkeleton } from '@/components/ui/states'
 import { Pagination } from '@/components/shared/Pagination'
 import { ADMIN_PAGE, useAdminAction, useAdminUsers, type AdminUserRow } from '../api'
@@ -24,6 +24,15 @@ export function AdminUsers() {
   const block = useAdminAction<{ id: string; reason: string }>('admin_block_user', (v) => ({ p_user: v.id, p_reason: v.reason }), 'Usuário bloqueado.')
   const unblock = useAdminAction<{ id: string; reason: string }>('admin_unblock_user', (v) => ({ p_user: v.id, p_reason: v.reason }), 'Usuário desbloqueado.')
   const blocking = target && !target.blocked_at
+  const [toDelete, setToDelete] = React.useState<AdminUserRow | null>(null)
+  const [confirmEmail, setConfirmEmail] = React.useState('')
+  React.useEffect(() => setConfirmEmail(''), [toDelete])
+  const remove = useAdminAction<{ id: string; reason: string; email: string }>(
+    'admin_delete_user',
+    (v) => ({ p_user: v.id, p_reason: v.reason, p_confirm_email: v.email }),
+    'Usuário excluído.',
+  )
+  const ownedOrgs = toDelete?.organizations.filter((o) => o.role === 'owner') ?? []
 
   const orgs = (u: AdminUserRow) =>
     u.organizations.length ? (
@@ -42,10 +51,15 @@ export function AdminUsers() {
   )
 
   const actionBtn = (u: AdminUserRow) =>
-    u.super_admin ? null : u.blocked_at ? (
-      <Button size="sm" variant="secondary" onClick={() => setTarget(u)}><LockOpen /> Desbloquear</Button>
-    ) : (
-      <Button size="sm" variant="danger" onClick={() => setTarget(u)}><Lock /> Bloquear</Button>
+    u.super_admin ? null : (
+      <div className="flex justify-end gap-1.5">
+        {u.blocked_at ? (
+          <Button size="sm" variant="secondary" onClick={() => setTarget(u)}><LockOpen /> Desbloquear</Button>
+        ) : (
+          <Button size="sm" variant="secondary" onClick={() => setTarget(u)}><Lock /> Bloquear</Button>
+        )}
+        <Button size="sm" variant="danger" aria-label={`Excluir ${u.email}`} title="Excluir usuário" onClick={() => setToDelete(u)}><Trash2 /></Button>
+      </div>
     )
 
   return (
@@ -99,6 +113,33 @@ export function AdminUsers() {
         loading={block.isPending || unblock.isPending}
         onConfirm={(reason) => (blocking ? block : unblock).mutate({ id: target!.id, reason }, { onSuccess: () => setTarget(null) })}
       />
+
+      <ReasonDialog
+        open={!!toDelete}
+        onOpenChange={(o) => !o && setToDelete(null)}
+        danger
+        title="Excluir usuário"
+        description={`Apaga definitivamente a conta de ${toDelete?.email ?? ''}: login, perfil e vínculos com estabelecimentos. Clientes e compras que ela registrou continuam no estabelecimento, sem autor.`}
+        confirmLabel="Excluir definitivamente"
+        confirmDisabled={ownedOrgs.length > 0 || confirmEmail.trim().toLowerCase() !== (toDelete?.email ?? '').toLowerCase()}
+        loading={remove.isPending}
+        onConfirm={(reason) => toDelete && remove.mutate({ id: toDelete.id, reason, email: confirmEmail }, { onSuccess: () => setToDelete(null) })}
+      >
+        {ownedOrgs.length > 0 ? (
+          <p className="rounded-md border border-warning/25 bg-warning/5 px-3 py-2 text-[13px] text-warning">
+            Esta pessoa é proprietária de {ownedOrgs.map((o) => o.name).join(', ')}. Exclua o estabelecimento antes (aba Estabelecimentos) para não deixá-lo sem dono.
+          </p>
+        ) : (
+          <>
+            <p className="rounded-md border border-danger/25 bg-danger/5 px-3 py-2 text-[13px] text-[#ff8a8a]">
+              Esta ação não pode ser desfeita. Se quiser apenas impedir o acesso, use Bloquear.
+            </p>
+            <Field label={`Digite o e-mail ${toDelete?.email ?? ''} para confirmar`} htmlFor="confirm-email">
+              <Input id="confirm-email" type="email" autoComplete="off" value={confirmEmail} onChange={(e) => setConfirmEmail(e.target.value)} />
+            </Field>
+          </>
+        )}
+      </ReasonDialog>
     </>
   )
 }

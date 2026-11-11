@@ -144,6 +144,16 @@ export function createAdminDemo({ today, addDays, ts, mainOrg, mainUser, custome
       log('delete_organization', 'organization', o.id, r, { name: o.name })
       return { ok: true }
     },
+    admin_delete_user: (b) => {
+      const r = reason(b.p_reason); const u = users.find((x) => x.id === b.p_user)
+      if (!u) throw Object.assign(new Error('NOT_FOUND'), { status: 400 })
+      if ((b.p_confirm_email ?? '').trim().toLowerCase() !== u.email.toLowerCase()) throw Object.assign(new Error('CONFIRMATION_MISMATCH'), { status: 400 })
+      if (orgs.some((o) => o.members.some((m) => m.user_id === u.id && m.role === 'owner'))) throw Object.assign(new Error('USER_OWNS_ORGANIZATION'), { status: 400 })
+      for (const o of orgs) o.members = o.members.filter((m) => m.user_id !== u.id)
+      users.splice(users.indexOf(u), 1)
+      log('delete_user', 'user', u.id, r, { email: u.email })
+      return { ok: true }
+    },
   }
   return { rpc }
 }
