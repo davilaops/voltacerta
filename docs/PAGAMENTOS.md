@@ -43,6 +43,8 @@ Gere um segredo forte, com 32 caracteres ou mais, para o webhook. A chave públi
 npx supabase secrets set --remote=gvhequjdqlmkonsxqmdf ABACATEPAY_API_KEY=abc_dev_xxx BILLING_WEBHOOK_SECRET=seu-segredo-longo APP_URL=http://localhost:5173
 ```
 
+`APP_URL` aceita várias origens separadas por vírgula (ex.: `https://voltacerta-brown.vercel.app,http://localhost:5173`); o retorno do checkout volta para a origem que fez a chamada.
+
 Opcional: `BILLING_METHODS=CARD,PIX`. O padrão é `CARD`. Na assinatura, `PIX` significa Pix Automático e precisa estar habilitado na sua conta.
 
 ### 3. Publicar as Edge Functions

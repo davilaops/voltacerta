@@ -7,16 +7,27 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { AbacatePayError, PROVIDER, abacatepay, keyEnvironment } from '../_shared/billing.ts'
 
-const APP_URL = (Deno.env.get('APP_URL') ?? '').replace(/\/$/, '')
-const cors = {
-  'Access-Control-Allow-Origin': APP_URL || '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
+// APP_URL aceita uma ou mais origens separadas por vírgula, ex.:
+//   "https://voltacerta.vercel.app,http://localhost:5173"
+// A primeira é a padrão; o retorno do checkout volta para a origem que fez a chamada, se permitida.
+const APP_ORIGINS = (Deno.env.get('APP_URL') ?? '')
+  .split(',')
+  .map((u) => u.trim().replace(/\/$/, ''))
+  .filter((u) => /^https?:\/\/[^/]+$/.test(u))
 const PLANS = ['inicial', 'profissional', 'premium']
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 Deno.serve(async (req) => {
+  const origin = (req.headers.get('Origin') ?? '').replace(/\/$/, '')
+  const APP_URL = APP_ORIGINS.includes(origin) ? origin : (APP_ORIGINS[0] ?? '')
+  const cors: Record<string, string> = {
+    'Access-Control-Allow-Origin': APP_URL || '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    Vary: 'Origin',
+  }
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } })
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   if (req.method !== 'POST') return json({ error: 'METHOD_NOT_ALLOWED' }, 405)
 
@@ -130,6 +141,3 @@ Deno.serve(async (req) => {
   }
 })
 
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } })
-}
