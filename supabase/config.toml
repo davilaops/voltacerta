@@ -6,11 +6,11 @@ schemas = ["public"]
 
 [db]
 port = 54322
-major_version = 15
+major_version = 17
 
 [auth]
 site_url = "http://localhost:5173"
-additional_redirect_urls = ["http://localhost:5173/redefinir-senha"]
+additional_redirect_urls = ["http://localhost:5173/**", "https://app.voltacerta.com.br/**", "https://admin.voltacerta.com.br/**", "https://voltacerta.com.br/**"]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 

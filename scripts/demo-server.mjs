@@ -11,6 +11,7 @@
  */
 import http from 'node:http'
 import { randomUUID } from 'node:crypto'
+import { createAdminDemo, plans } from './demo-admin.mjs'
 
 const PORT = 54321
 const TZ = 'America/Sao_Paulo'
@@ -187,7 +188,7 @@ function vCustomers() {
 
 const ctx = () => ({
   role: 'owner', plan: 'profissional', status: 'trialing', effective_status: 'trialing', trial_ends_at: ts(addDays(today, 9)),
-  current_period_end: null, can_write: true, customer_limit: 500, customer_count: customers.length,
+  current_period_end: null, can_write: true, suspended: false, suspended_reason: null, trial_started_at: ts(addDays(today, -5)), customer_limit: 500, customer_count: customers.length,
   features: { reports_full: true, history_advanced: true, reports_advanced: false }, today,
 })
 
@@ -299,6 +300,7 @@ const tables = {
   organization_invitations: () => [],
   data_deletion_requests: () => [],
   subscriptions: () => [],
+  plans: () => plans,
 }
 
 // Tabelas base que aceitam escrita no modo demonstração (as views derivam delas)
@@ -361,6 +363,8 @@ function session() {
   }
 }
 
+const adminDemo = createAdminDemo({ today, addDays, ts, mainOrg: org, mainUser: user, customersCount: customers.length })
+
 const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin ?? '*')
   res.setHeader('Access-Control-Allow-Headers', '*')
@@ -390,6 +394,13 @@ const server = http.createServer(async (req, res) => {
   // RPC
   if (path.startsWith('/rest/v1/rpc/')) {
     const fn = path.split('/').pop()
+    if (adminDemo.rpc[fn]) {
+      try {
+        return send(res, 200, adminDemo.rpc[fn](body ?? {}) ?? null)
+      } catch (e) {
+        return send(res, e.status ?? 400, { message: e.message })
+      }
+    }
     switch (fn) {
       case 'get_org_context': return send(res, 200, ctx())
       case 'accept_pending_invitations': return send(res, 200, 0)

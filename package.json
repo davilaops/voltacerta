@@ -14,7 +14,8 @@
     "db:push": "supabase db push",
     "functions:deploy": "supabase functions deploy billing-checkout && supabase functions deploy billing-webhook --no-verify-jwt",
     "demo:api": "node scripts/demo-server.mjs",
-    "demo:web": "vite --mode demo --port 5174"
+    "demo:web": "vite --mode demo --port 5174",
+    "admin:promote": "node scripts/promote-super-admin.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.5",

@@ -18,8 +18,21 @@ const MESSAGES: Record<string, string> = {
   INVALID_STATUS_TRANSITION: 'Não é possível alterar o status desta previsão.',
   INVALID_ROLE_CHANGE: 'Alteração de papel não permitida.',
   ORG_LIMIT_REACHED: 'Limite de estabelecimentos por conta atingido.',
+  ORG_ALREADY_EXISTS: 'Você já possui um estabelecimento. Para adicionar outro, use o seletor de estabelecimentos no painel.',
+  USER_BLOCKED: 'Seu acesso está bloqueado. Fale com o suporte.',
+  REASON_REQUIRED: 'Informe uma justificativa (mínimo de 5 caracteres).',
+  SUBSCRIPTION_ALREADY_ACTIVE: 'A assinatura está ativa e paga; não é possível convertê-la em teste.',
+  CANNOT_BLOCK_SELF: 'Você não pode bloquear a sua própria conta.',
+  CANNOT_BLOCK_ADMIN: 'Não é possível bloquear outro Super Admin.',
+  INVALID_DAYS: 'Informe entre 1 e 90 dias.',
+  INVALID_PRICE: 'Preço inválido.',
+  INVALID_LIMIT: 'Limite inválido.',
   BILLING_NOT_CONFIGURED: 'Pagamentos ainda não estão configurados neste ambiente.',
   BILLING_ADAPTER_PENDING: 'A integração com o gateway de pagamento ainda não foi concluída.',
+  BILLING_PROVIDER_ERROR: 'Não foi possível abrir o pagamento agora. Tente novamente em instantes.',
+  ALREADY_SUBSCRIBED: 'Você já assina este plano.',
+  PLAN_CHANGE_REQUIRES_SUPPORT: 'Você já tem uma assinatura ativa. Para trocar de plano, fale com o suporte.',
+  ORG_SUSPENDED: 'Este estabelecimento está suspenso.',
 }
 
 const CONSTRAINTS: Record<string, string> = {

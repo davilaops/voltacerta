@@ -79,6 +79,7 @@ export function OnboardingPage() {
       p_city: draft.city || null,
       p_state: draft.state || null,
       p_business_type: draft.type || null,
+      p_additional: isNew,
     })
     localStorage.setItem('vc.currentOrg', id)
     setOrgId(id)

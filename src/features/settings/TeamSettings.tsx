@@ -29,7 +29,7 @@ export function TeamSettings() {
   const qc = useQueryClient()
   const confirm = useConfirm()
   const [email, setEmail] = React.useState('')
-  const [inviteRole, setInviteRole] = React.useState<MemberRole>('staff')
+  const [inviteRole, setInviteRole] = React.useState<MemberRole>('employee')
 
   const members = useQuery({
     queryKey: ['members', org.id],
@@ -94,7 +94,7 @@ export function TeamSettings() {
             {members.data?.map((m) => {
               const name = m.profile?.full_name ?? m.profile?.email ?? 'Usuário'
               const canEdit = role === 'owner' && m.role !== 'owner' && m.user_id !== user?.id
-              const canRemove = m.role !== 'owner' && m.user_id !== user?.id && (role === 'owner' || (role === 'admin' && m.role === 'staff'))
+              const canRemove = m.role !== 'owner' && m.user_id !== user?.id && (role === 'owner' || (role === 'admin' && m.role === 'employee'))
               return (
                 <li key={m.user_id} className="flex flex-col gap-3 px-5 py-3 sm:flex-row sm:items-center">
                   <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -108,7 +108,7 @@ export function TeamSettings() {
                     {canEdit ? (
                       <Select aria-label="Papel" className="h-8 sm:h-8" value={m.role} onChange={(e) => changeRole.mutate({ userId: m.user_id, role: e.target.value as MemberRole })}>
                         <option value="admin">{ROLE.admin}</option>
-                        <option value="staff">{ROLE.staff}</option>
+                        <option value="employee">{ROLE.employee}</option>
                       </Select>
                     ) : (
                       <Badge tone={m.role === 'owner' ? 'brand' : 'neutral'}>{ROLE[m.role]}</Badge>
@@ -148,7 +148,7 @@ export function TeamSettings() {
               </Field>
               <Field label="Papel" htmlFor="invrole">
                 <Select id="invrole" value={inviteRole} onChange={(e) => setInviteRole(e.target.value as MemberRole)}>
-                  <option value="staff">{ROLE.staff}</option>
+                  <option value="employee">{ROLE.employee}</option>
                   <option value="admin">{ROLE.admin}</option>
                 </Select>
               </Field>

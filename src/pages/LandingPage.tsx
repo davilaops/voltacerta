@@ -21,8 +21,8 @@ import {
 } from 'lucide-react'
 import { Logo } from '@/components/brand/Logo'
 import { Button } from '@/components/ui/button'
-import { PLANS } from '@/domain/labels'
-import { formatCurrency } from '@/lib/format'
+import { AppLink } from '@/components/shared/AppLink'
+import { customerLimitLabel, formatCents, usePlans } from '@/features/billing/plans'
 import { cn } from '@/lib/utils'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
 
@@ -132,6 +132,42 @@ function Faq({ q, a }: { q: string; a: string }) {
   )
 }
 
+/** Planos lidos da tabela public.plans (fonte única de preços). */
+function PlansGrid() {
+  const plans = usePlans()
+  if (plans.isError || (!plans.isLoading && !plans.data?.length)) {
+    return (
+      <div className="mx-auto max-w-md rounded-xl border border-border bg-surface p-6 text-center text-sm text-muted">
+        Não foi possível carregar os planos agora. Crie sua conta e teste grátis por 14 dias.
+        <Button className="mt-4 w-full" asChild><AppLink to="/cadastro">Começar teste grátis</AppLink></Button>
+      </div>
+    )
+  }
+  return (
+    <div className="grid gap-4 md:grid-cols-3">
+      {plans.isLoading
+        ? [0, 1, 2].map((i) => <div key={i} className="h-96 animate-pulse rounded-xl border border-border bg-surface" />)
+        : plans.data!.map((p) => (
+            <div key={p.id} className={cn('relative flex flex-col rounded-xl border bg-surface p-7', p.highlight ? 'border-brand/50 shadow-[0_0_0_1px_rgb(34_197_139/0.2),0_20px_50px_-20px_rgb(34_197_139/0.35)]' : 'border-border')}>
+              {p.highlight && <span className="absolute -top-3 left-7 rounded-full bg-brand px-2.5 py-0.5 text-[11px] font-semibold text-brand-fg">Mais escolhido</span>}
+              <h3 className="text-base font-semibold">{p.name}</h3>
+              <div className="mt-4 flex items-baseline gap-1">
+                <span className="text-4xl font-semibold tracking-tight tabular">{formatCents(p.price_cents)}</span>
+                <span className="text-sm text-muted">/mês</span>
+              </div>
+              <p className="mt-1.5 text-sm text-muted">{customerLimitLabel(p.customer_limit)}</p>
+              <ul className="mt-6 flex-1 space-y-3 text-sm">
+                {p.highlights.map((f) => <li key={f} className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-brand" />{f}</li>)}
+              </ul>
+              <Button className="mt-8 w-full" variant={p.highlight ? 'primary' : 'secondary'} asChild>
+                <AppLink to="/cadastro">Começar teste grátis</AppLink>
+              </Button>
+            </div>
+          ))}
+    </div>
+  )
+}
+
 export function LandingPage() {
   useDocumentTitle('')
   const [menu, setMenu] = React.useState(false)
@@ -145,8 +181,8 @@ export function LandingPage() {
             {NAV.map((n) => <a key={n.href} href={n.href} className="text-sm text-muted transition-colors hover:text-fg">{n.label}</a>)}
           </nav>
           <div className="hidden items-center gap-2 md:flex">
-            <Button variant="ghost" asChild><Link to="/entrar">Entrar</Link></Button>
-            <Button asChild><Link to="/cadastro">Começar agora</Link></Button>
+            <Button variant="ghost" asChild><AppLink to="/entrar">Entrar</AppLink></Button>
+            <Button asChild><AppLink to="/cadastro">Começar agora</AppLink></Button>
           </div>
           <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMenu((m) => !m)} aria-label="Menu">
             {menu ? <X /> : <MenuIcon />}
@@ -158,8 +194,8 @@ export function LandingPage() {
               {NAV.map((n) => <a key={n.href} href={n.href} onClick={() => setMenu(false)} className="rounded-md px-2 py-2.5 text-sm text-muted hover:bg-surface-2">{n.label}</a>)}
             </nav>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <Button variant="secondary" asChild><Link to="/entrar">Entrar</Link></Button>
-              <Button asChild><Link to="/cadastro">Começar agora</Link></Button>
+              <Button variant="secondary" asChild><AppLink to="/entrar">Entrar</AppLink></Button>
+              <Button asChild><AppLink to="/cadastro">Começar agora</AppLink></Button>
             </div>
           </div>
         )}
@@ -181,7 +217,7 @@ export function LandingPage() {
               Identifique quando seus clientes estão próximos de precisar de novos produtos e transforme oportunidades de recompra em novas vendas.
             </p>
             <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-              <Button size="lg" asChild><Link to="/cadastro">Começar agora <ArrowRight /></Link></Button>
+              <Button size="lg" asChild><AppLink to="/cadastro">Começar agora <ArrowRight /></AppLink></Button>
               <Button size="lg" variant="secondary" asChild><a href="#como-funciona">Conhecer a plataforma</a></Button>
             </div>
             <p className="mt-4 text-xs text-subtle">14 dias grátis · sem cartão de crédito · cancele quando quiser</p>
@@ -285,25 +321,7 @@ export function LandingPage() {
 
         {/* Planos */}
         <Section id="planos" eyebrow="Planos" title="Simples, sem taxa de adesão" subtitle="Comece com 14 dias grátis com todos os recursos do plano Profissional." className="bg-surface/40">
-          <div className="grid gap-4 md:grid-cols-3">
-            {PLANS.map((p) => (
-              <div key={p.id} className={cn('relative flex flex-col rounded-xl border bg-surface p-7', p.highlight ? 'border-brand/50 shadow-[0_0_0_1px_rgb(34_197_139/0.2),0_20px_50px_-20px_rgb(34_197_139/0.35)]' : 'border-border')}>
-                {p.highlight && <span className="absolute -top-3 left-7 rounded-full bg-brand px-2.5 py-0.5 text-[11px] font-semibold text-brand-fg">Mais escolhido</span>}
-                <h3 className="text-base font-semibold">{p.name}</h3>
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-4xl font-semibold tracking-tight tabular">{formatCurrency(p.price)}</span>
-                  <span className="text-sm text-muted">/mês</span>
-                </div>
-                <p className="mt-1.5 text-sm text-muted">{p.customers}</p>
-                <ul className="mt-6 flex-1 space-y-3 text-sm">
-                  {p.features.map((f) => <li key={f} className="flex gap-2.5"><Check className="mt-0.5 size-4 shrink-0 text-brand" />{f}</li>)}
-                </ul>
-                <Button className="mt-8 w-full" variant={p.highlight ? 'primary' : 'secondary'} asChild>
-                  <Link to="/cadastro">Começar teste grátis</Link>
-                </Button>
-              </div>
-            ))}
-          </div>
+          <PlansGrid />
         </Section>
 
         {/* FAQ */}
@@ -326,7 +344,7 @@ export function LandingPage() {
             <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(60% 80% at 50% 0%, rgb(34 197 139 / 0.14), transparent)' }} />
             <h2 className="relative text-3xl font-semibold tracking-tight sm:text-4xl">Comece a trazer seus clientes de volta</h2>
             <p className="relative mx-auto mt-4 max-w-xl text-muted">Configure em poucos minutos e veja quem precisa de contato ainda hoje.</p>
-            <Button size="lg" className="relative mt-8" asChild><Link to="/cadastro">Começar agora <ArrowRight /></Link></Button>
+            <Button size="lg" className="relative mt-8" asChild><AppLink to="/cadastro">Começar agora <ArrowRight /></AppLink></Button>
           </div>
         </section>
       </main>
@@ -341,7 +359,7 @@ export function LandingPage() {
             <a href="#planos" className="hover:text-fg">Planos</a>
             <Link to="/privacidade" className="hover:text-fg">Privacidade</Link>
             <Link to="/termos" className="hover:text-fg">Termos de uso</Link>
-            <Link to="/entrar" className="hover:text-fg">Entrar</Link>
+            <AppLink to="/entrar" className="hover:text-fg">Entrar</AppLink>
           </nav>
           <p className="text-xs text-subtle">© {new Date().getFullYear()} VoltaCerta</p>
         </div>

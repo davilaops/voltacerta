@@ -1,32 +1,41 @@
 /**
- * Lógica de cobrança independente de runtime (Deno nas Edge Functions,
- * Node nos testes). Usa apenas Web Crypto.
+ * Integração AbacatePay (API v2) — lógica independente de runtime
+ * (Deno nas Edge Functions, Node nos testes). Usa apenas fetch e Web Crypto.
  *
- * IMPORTANTE: o formato do payload do provedor (AbacatePay) deve ser
- * conferido com a documentação oficial antes de entrar em produção.
- * Este módulo trabalha com um formato canônico e um adaptador explícito;
- * nenhum pagamento é considerado confirmado sem evento assinado do provedor.
+ * Referências oficiais (conferidas em 10/11/2026):
+ *   https://docs.abacatepay.com/pages/reference/introduction   (base, auth, envelope)
+ *   https://docs.abacatepay.com/pages/products/create          (POST /products/create)
+ *   https://docs.abacatepay.com/pages/client/create            (POST /customers/create)
+ *   https://docs.abacatepay.com/pages/subscriptions/create     (POST /subscriptions/create)
+ *   https://docs.abacatepay.com/pages/notificacoes/seguranca   (X-Webhook-Secret / X-Webhook-Signature)
+ *   https://docs.abacatepay.com/pages/webhooks/events/subscriptions
+ *
+ * Nenhum pagamento é considerado confirmado sem um evento autenticado do provedor.
  */
 
-export type PlanTier = 'inicial' | 'profissional' | 'premium'
-export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired'
+export const PROVIDER = 'abacatepay'
+export const ABACATEPAY_API = 'https://api.abacatepay.com/v2'
 
-export interface CanonicalBillingEvent {
-  eventId: string
-  type: 'payment_confirmed' | 'payment_failed' | 'subscription_canceled' | 'subscription_expired' | 'unknown'
-  rawType: string
-  organizationId: string | null
-  plan: PlanTier | null
-  periodEnd: string | null
-  providerCustomerId: string | null
-  providerSubscriptionId: string | null
+export type PlanTier = 'inicial' | 'profissional' | 'premium'
+export type EventKind = 'paid' | 'failed' | 'canceled' | 'refunded' | 'ignored'
+
+/** Evento normalizado, aplicado no banco por public.billing_apply_event(). */
+export interface BillingEvent {
+  provider: string
+  event_id: string
+  event_type: string
+  kind: EventKind
+  checkout_id: string | null
+  subscription_id: string | null
+  customer_id: string | null
+  payment_id: string | null
+  amount_cents: number | null
+  paid_at: string | null
+  dev_mode: boolean
+  payload: unknown
 }
 
 const encoder = new TextEncoder()
-
-function toHex(buf: ArrayBuffer): string {
-  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('')
-}
 
 /** Comparação em tempo constante para evitar timing attacks. */
 export function safeEqual(a: string, b: string): boolean {
@@ -36,78 +45,126 @@ export function safeEqual(a: string, b: string): boolean {
   return diff === 0
 }
 
-export async function hmacSha256Hex(secret: string, payload: string): Promise<string> {
-  const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
-  return toHex(await crypto.subtle.sign('HMAC', key, encoder.encode(payload)))
+function toBase64(buf: ArrayBuffer): string {
+  let s = ''
+  for (const b of new Uint8Array(buf)) s += String.fromCharCode(b)
+  return btoa(s)
 }
 
-/** Valida assinatura HMAC-SHA256 (hex, opcionalmente prefixada por "sha256="). */
-export async function verifySignature(secret: string, rawBody: string, header: string | null): Promise<boolean> {
-  if (!secret || !header) return false
-  const provided = header.trim().replace(/^sha256=/i, '').toLowerCase()
-  const expected = await hmacSha256Hex(secret, rawBody)
-  return safeEqual(provided, expected)
+export async function hmacSha256Base64(key: string, payload: string): Promise<string> {
+  const k = await crypto.subtle.importKey('raw', encoder.encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+  return toBase64(await crypto.subtle.sign('HMAC', k, encoder.encode(payload)))
 }
-
-const PLANS: PlanTier[] = ['inicial', 'profissional', 'premium']
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 /**
- * Adaptador do payload do provedor -> evento canônico.
- * Espera metadados `organization_id` e `plan` enviados na criação da cobrança.
- * Os nomes de eventos em EVENT_TYPE_MAP DEVEM ser confirmados na documentação do provedor.
+ * Prova de ORIGEM: o segredo cadastrado no webhook chega no cabeçalho
+ * X-Webhook-Secret (e também em ?webhookSecret=). Preferimos o cabeçalho.
  */
-export const EVENT_TYPE_MAP: Record<string, CanonicalBillingEvent['type']> = {
-  'billing.paid': 'payment_confirmed',
-  'subscription.paid': 'payment_confirmed',
-  'billing.failed': 'payment_failed',
-  'subscription.canceled': 'subscription_canceled',
-  'subscription.expired': 'subscription_expired',
+export function verifyWebhookSecret(expected: string, header: string | null, query: string | null): boolean {
+  if (!expected) return false
+  const provided = header ?? query
+  return !!provided && safeEqual(provided, expected)
 }
 
-export function parseProviderEvent(payload: unknown): CanonicalBillingEvent {
-  const p = (payload ?? {}) as Record<string, unknown>
-  const data = (p.data ?? {}) as Record<string, unknown>
-  const meta = (data.metadata ?? p.metadata ?? {}) as Record<string, unknown>
-  const rawType = String(p.event ?? p.type ?? '')
-  const eventId = p.id == null ? '' : String(p.id)
+/**
+ * Prova de INTEGRIDADE: X-Webhook-Signature = base64(HMAC-SHA256(corpo bruto, chave pública da AbacatePay)).
+ * A chave é pública (igual para todas as contas), então sozinha NÃO autentica — sempre
+ * combine com verifyWebhookSecret.
+ */
+export async function verifyWebhookSignature(publicKey: string, rawBody: string, header: string | null): Promise<boolean> {
+  if (!publicKey || !header) return false
+  return safeEqual(header.trim(), await hmacSha256Base64(publicKey, rawBody))
+}
+
+type Obj = Record<string, unknown>
+const obj = (v: unknown): Obj => (v && typeof v === 'object' ? (v as Obj) : {})
+const str = (v: unknown): string | null => (typeof v === 'string' && v.length > 0 ? v : null)
+const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : null)
+
+const PAID_STATUSES = new Set(['PAID', 'APPROVED'])
+
+/**
+ * Converte o payload do webhook v2 em um BillingEvent.
+ * Concessão de acesso vem SOMENTE dos eventos subscription.* — checkout.completed
+ * também dispara a cada ciclo pago e é ignorado para não contar duas vezes
+ * (recomendação da própria documentação).
+ */
+export function parseAbacateEvent(payload: unknown): BillingEvent {
+  const p = obj(payload)
+  const eventId = str(p.id)
   if (!eventId) throw new Error('EVENT_ID_MISSING')
+  const type = String(p.event ?? '')
+  const data = obj(p.data)
+  const subscription = obj(data.subscription)
+  const checkout = obj(data.checkout)
+  const payment = obj(data.payment)
+  const customer = obj(data.customer)
 
-  const plan = typeof meta.plan === 'string' && PLANS.includes(meta.plan as PlanTier) ? (meta.plan as PlanTier) : null
-  const orgId = typeof meta.organization_id === 'string' && UUID_RE.test(meta.organization_id) ? meta.organization_id : null
+  let kind: EventKind = 'ignored'
+  switch (type) {
+    case 'subscription.completed':
+    case 'subscription.renewed':
+      kind = PAID_STATUSES.has(String(payment.status ?? '')) ? 'paid' : 'ignored'
+      break
+    case 'subscription.payment_failed':
+      kind = 'failed'
+      break
+    case 'subscription.cancelled':
+      kind = 'canceled'
+      break
+    case 'checkout.refunded':
+      kind = str(checkout.frequency) === 'SUBSCRIPTION' ? 'refunded' : 'ignored'
+      break
+  }
+
   return {
-    eventId,
-    rawType,
-    type: EVENT_TYPE_MAP[rawType] ?? 'unknown',
-    organizationId: orgId,
-    plan,
-    periodEnd: typeof data.period_end === 'string' ? data.period_end : null,
-    providerCustomerId: typeof data.customer_id === 'string' ? data.customer_id : null,
-    providerSubscriptionId: typeof data.subscription_id === 'string' ? data.subscription_id : null,
+    provider: PROVIDER,
+    event_id: eventId,
+    event_type: type,
+    kind,
+    checkout_id: str(checkout.id),
+    subscription_id: str(subscription.id),
+    customer_id: str(customer.id) ?? str(checkout.customerId),
+    payment_id: str(payment.id) ?? (kind === 'refunded' ? str(checkout.id) : null),
+    amount_cents: num(payment.paidAmount) ?? num(payment.amount) ?? num(subscription.amount),
+    paid_at: kind === 'paid' ? (str(payment.updatedAt) ?? str(payment.createdAt)) : null,
+    dev_mode: p.devMode === true,
+    payload,
   }
 }
 
-export type SubscriptionUpdate = {
-  status: SubscriptionStatus
-  plan?: PlanTier
-  current_period_end?: string
-  canceled_at?: string
+/** Ambiente da chave: abc_dev_... (modo teste) ou abc_prod_... */
+export function keyEnvironment(apiKey: string): 'dev' | 'prod' {
+  return apiKey.startsWith('abc_dev_') ? 'dev' : 'prod'
 }
 
-/** Calcula a alteração de assinatura decorrente de um evento confirmado. */
-export function subscriptionUpdateFor(ev: CanonicalBillingEvent, now = new Date()): SubscriptionUpdate | null {
-  switch (ev.type) {
-    case 'payment_confirmed': {
-      const end = ev.periodEnd ?? new Date(now.getTime() + 31 * 86400000).toISOString()
-      return { status: 'active', current_period_end: end, ...(ev.plan ? { plan: ev.plan } : {}) }
-    }
-    case 'payment_failed':
-      return { status: 'past_due' }
-    case 'subscription_canceled':
-      return { status: 'canceled', canceled_at: now.toISOString() }
-    case 'subscription_expired':
-      return { status: 'expired' }
-    default:
-      return null
+export class AbacatePayError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message)
   }
+}
+
+/** Chamada à API v2. Envelope: { data, success, error }. */
+export async function abacatepay<T = Obj>(
+  apiKey: string,
+  method: 'GET' | 'POST',
+  path: string,
+  body?: unknown,
+  fetchImpl: typeof fetch = fetch,
+): Promise<T> {
+  const res = await fetchImpl(`${ABACATEPAY_API}${path}`, {
+    method,
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+  let env: { data?: T; success?: boolean; error?: string | null } = {}
+  try {
+    env = await res.json()
+  } catch {
+    /* corpo não-JSON */
+  }
+  if (!res.ok || env.success === false || env.data == null) {
+    throw new AbacatePayError(env.error ?? `HTTP ${res.status}`, res.status)
+  }
+  return env.data
 }

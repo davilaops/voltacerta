@@ -144,7 +144,7 @@ describe('clientes e produtos', () => {
 
   it('funcionário não pode excluir cliente; owner pode', async () => {
     const staffId = await db.createUser('func@teste.com')
-    await db.admin.query(`insert into public.organization_members values ($1, $2, 'staff')`, [A.orgId, staffId])
+    await db.admin.query(`insert into public.organization_members values ($1, $2, 'employee')`, [A.orgId, staffId])
     const staff = db.as(staffId)
     const c = await createCustomer(A, 'Para Excluir', null)
     expect(await staff.query('delete from public.customers where id = $1 returning id', [c.id])).toHaveLength(0)
@@ -416,7 +416,7 @@ describe('equipe e convites', () => {
 
   it('admin não pode promover ninguém a owner nem remover o owner', async () => {
     const adminId = (await db.admin.query<{ id: string }>(`select id from auth.users where email = 'novo@teste.com'`))[0].id
-    await expect(db.as(adminId).query('select public.update_member_role($1, $2, $3)', [A.orgId, A.userId, 'staff'])).rejects.toThrow(/FORBIDDEN/)
+    await expect(db.as(adminId).query('select public.update_member_role($1, $2, $3)', [A.orgId, A.userId, 'employee'])).rejects.toThrow(/FORBIDDEN/)
     await expect(db.as(adminId).query('select public.remove_member($1, $2)', [A.orgId, A.userId])).rejects.toThrow(/FORBIDDEN/)
   })
 })

@@ -24,7 +24,22 @@ export function LoginPage() {
 
   const onSubmit = form.handleSubmit(async (values) => {
     const { error } = await supabase.auth.signInWithPassword(values)
-    if (error) return toast.error(errorMessage(error))
+    if (error) {
+      if (/email not confirmed/i.test(error.message)) {
+        return toast.error('Confirme seu e-mail antes de entrar.', {
+          description: 'Não recebeu? Podemos reenviar o link de confirmação.',
+          action: {
+            label: 'Reenviar',
+            onClick: async () => {
+              const r = await supabase.auth.resend({ type: 'signup', email: values.email, options: { emailRedirectTo: `${appUrl}/onboarding` } })
+              if (r.error) toast.error(errorMessage(r.error))
+              else toast.success('Link de confirmação reenviado. Verifique sua caixa de entrada e o spam.')
+            },
+          },
+        })
+      }
+      return toast.error(errorMessage(error))
+    }
     navigate(from, { replace: true })
   })
 

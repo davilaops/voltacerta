@@ -4,6 +4,8 @@ Plataforma SaaS de **recompra inteligente para pet shops**. Identifica quando ca
 
 > Stack: React 19 + TypeScript + Vite + Tailwind CSS v4 + componentes no padrão shadcn/ui (Radix) + TanStack Query + React Hook Form + Zod + Recharts · Supabase (PostgreSQL, Auth, Storage, Edge Functions, RLS).
 
+> **Fase SaaS (planos centralizados, Super Admin, subdomínios, suspensão e bloqueio):** veja o relatório completo em [docs/FASE-SAAS.md](docs/FASE-SAAS.md).
+
 ---
 
 ## 1. Arquitetura implementada
@@ -86,7 +88,7 @@ Regras ao registrar compra: a previsão ativa do mesmo produto é encerrada como
 - **Central de recompras**: abas Todas/Próximas/Para hoje/Atrasadas/Contatadas/Concluídas, filtros por período, produto, categoria e cliente, ordenação por data e valor potencial, ignorar oportunidade.
 - **Recuperação de clientes**: fila por urgência, modelos de mensagem com variáveis, link `wa.me` codificado, registro **somente após confirmação** com resultado (respondeu, não respondeu, comprou, sem interesse, retornar depois + data), usuário responsável, histórico da equipe, rate limit.
 - **Relatórios** (8): vendas por período, produtos mais vendidos, recorrência, inativos, recompras concluídas, oportunidades perdidas, receita recuperada, taxa de recuperação — exportação CSV (`;` + BOM, proteção contra injeção de fórmula).
-- **Configurações**: estabelecimento (com upload de logo), perfil (nome, e-mail, senha), critérios de recompra, modelos de mensagem (criar/editar/excluir/restaurar padrão com pré-visualização), equipe (papéis owner/admin/staff, convites, remoção), privacidade.
+- **Configurações**: estabelecimento (com upload de logo), perfil (nome, e-mail, senha), critérios de recompra, modelos de mensagem (criar/editar/excluir/restaurar padrão com pré-visualização), equipe (papéis owner/admin/employee, convites, remoção), privacidade.
 - **Planos**: Inicial/Profissional/Premium, trial de 14 dias, limite de clientes e relatórios aplicados no banco, banner de assinatura, modo somente leitura quando expirada.
 - **LGPD**: consentimento e oposição ao contato com data, bloqueio de contato no servidor, exportação JSON por cliente, exclusão completa do cliente, exportação CSV da base, solicitação de exclusão do estabelecimento, auditoria sem dados pessoais.
 - **Landing page** com as 10 seções, SEO (title, description, Open Graph, canonical, robots.txt, sitemap.xml, URLs amigáveis em português).
@@ -96,7 +98,7 @@ Regras ao registrar compra: a previsão ativa do mesmo produto é encerrada como
 
 | Item | Situação |
 |---|---|
-| Checkout de assinatura | Edge Function `billing-checkout` valida usuário e papel, mas **não chama o gateway** — retorna `BILLING_NOT_CONFIGURED` (sem chave) ou `BILLING_ADAPTER_PENDING` (com chave). Os endpoints do AbacatePay precisam ser integrados a partir da documentação oficial. |
+| Checkout de assinatura | Integrado à AbacatePay (API v2, assinatura mensal no checkout hospedado). O plano só é ativado pelo webhook autenticado. Configuração em [docs/PAGAMENTOS.md](docs/PAGAMENTOS.md). |
 | Webhook de pagamento | Verificação HMAC-SHA256, idempotência e atualização da assinatura implementadas e testadas. O **formato do payload e os nomes de eventos** (`EVENT_TYPE_MAP` em `supabase/functions/_shared/billing.ts`) e o cabeçalho da assinatura precisam ser confirmados com o provedor. |
 | Convites de equipe | Convite registrado e aceito automaticamente no login do e-mail convidado; **o e-mail de convite não é enviado** — o admin compartilha o link de cadastro. |
 | Exclusão do estabelecimento | A solicitação é registrada (`data_deletion_requests`); o processamento é manual pela equipe VoltaCerta (via service role). |
@@ -165,10 +167,10 @@ Edge Functions (`supabase secrets set …`) — **nunca no frontend**:
 |---|---|
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | injetadas automaticamente pelo Supabase |
 | `APP_URL` | origem permitida no CORS do checkout |
-| `ABACATEPAY_API_KEY` | chave do gateway |
-| `BILLING_WEBHOOK_SECRET` | segredo HMAC do webhook |
-| `BILLING_SIGNATURE_HEADER` | cabeçalho da assinatura (padrão `x-webhook-signature`; confirmar com o provedor) |
-| `BILLING_PROVIDER` | padrão `abacatepay` |
+| `ABACATEPAY_API_KEY` | chave v2 da AbacatePay (`abc_dev_`/`abc_prod_`) |
+| `BILLING_WEBHOOK_SECRET` | segredo cadastrado no webhook (chega em `X-Webhook-Secret`) |
+| (chave pública HMAC) | fixada em `billing-webhook` (constante oficial da AbacatePay) |
+| `APP_URL` / `BILLING_METHODS` | URL do app para retorno do checkout / métodos (`CARD`, `PIX`; padrão `CARD`) |
 
 ## 10. Executar localmente
 

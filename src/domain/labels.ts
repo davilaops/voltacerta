@@ -72,7 +72,7 @@ export const CONTACT_RESULT: Record<ContactResult, { label: string; tone: Tone }
 export const ROLE: Record<MemberRole, string> = {
   owner: 'Proprietário',
   admin: 'Administrador',
-  staff: 'Funcionário',
+  employee: 'Funcionário',
 }
 
 export const BUSINESS_TYPE: Record<BusinessType, string> = {
@@ -97,36 +97,5 @@ export const BR_STATES = [
   'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
 ] as const
 
-export interface PlanInfo {
-  id: PlanTier
-  name: string
-  price: number
-  customers: string
-  features: string[]
-  highlight?: boolean
-}
-
-export const PLANS: PlanInfo[] = [
-  {
-    id: 'inicial',
-    name: 'Inicial',
-    price: 39.9,
-    customers: 'Até 100 clientes',
-    features: ['Cadastro de produtos', 'Previsão de recompra', 'WhatsApp por link', 'Dashboard básico'],
-  },
-  {
-    id: 'profissional',
-    name: 'Profissional',
-    price: 69.9,
-    customers: 'Até 500 clientes',
-    features: ['Todas as funcionalidades', 'Relatórios completos', 'Histórico avançado'],
-    highlight: true,
-  },
-  {
-    id: 'premium',
-    name: 'Premium',
-    price: 99.9,
-    customers: 'Clientes ilimitados',
-    features: ['Todas as funcionalidades', 'Relatórios avançados', 'Recursos futuros de automação'],
-  },
-]
+/** Nome de exibição do plano (preços e limites ficam na tabela public.plans). */
+export const PLAN_NAME: Record<PlanTier, string> = { inicial: 'Inicial', profissional: 'Profissional', premium: 'Premium' }

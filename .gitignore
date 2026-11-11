@@ -1,8 +1,9 @@
-node_modules
-dist
-.env
-.env.local
-.env.*.local
-supabase/.temp
-supabase/.branches
 *.log
+.env
+.env.*.local
+.env.admin
+.env.local
+dist
+node_modules
+supabase/.branches
+supabase/.temp

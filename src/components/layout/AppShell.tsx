@@ -24,7 +24,7 @@ import { Sheet } from '@/components/ui/dialog'
 import { Menu, MenuContent, MenuItem, MenuSeparator, MenuTrigger } from '@/components/ui/menu'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { useOrg } from '@/features/org/OrgProvider'
-import { PLANS, ROLE } from '@/domain/labels'
+import { PLAN_NAME, ROLE } from '@/domain/labels'
 import { isDemoMode, isDevEnvironment } from '@/lib/supabase'
 import { cn, initials } from '@/lib/utils'
 import { diffDaysISO } from '@/lib/dates'
@@ -112,7 +112,7 @@ function SidebarFooter({ onNavigate }: { onNavigate?: () => void }) {
   const { user, signOut } = useAuth()
   const { ctx, role } = useOrg()
   const navigate = useNavigate()
-  const plan = PLANS.find((p) => p.id === ctx.plan)
+
   const trialDays = ctx.effective_status === 'trialing' && ctx.trial_ends_at ? Math.max(0, diffDaysISO(ctx.trial_ends_at.slice(0, 10), ctx.today)) : null
   const name = (user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? ''
 
@@ -127,7 +127,7 @@ function SidebarFooter({ onNavigate }: { onNavigate?: () => void }) {
           <span className="text-[11px] font-medium uppercase tracking-wide text-subtle">Plano atual</span>
           <CreditCard className="size-3.5 text-subtle" />
         </div>
-        <div className="mt-0.5 text-[13px] font-semibold text-fg">{plan?.name}</div>
+        <div className="mt-0.5 text-[13px] font-semibold text-fg">{PLAN_NAME[ctx.plan]}</div>
         {trialDays != null && <div className="text-[11px] text-warning">Teste grátis · {trialDays} {trialDays === 1 ? 'dia' : 'dias'} restantes</div>}
         {ctx.customer_limit != null && (
           <div className="mt-2">
@@ -189,7 +189,10 @@ function SubscriptionBanner() {
   const s = ctx.effective_status
   let text: string | null = null
   let tone = 'border-warning/30 bg-warning/10 text-warning'
-  if (s === 'expired' || s === 'canceled') {
+  if (ctx.suspended) {
+    text = `Este estabelecimento está suspenso${ctx.suspended_reason ? `: ${ctx.suspended_reason}` : ''}. Os dados continuam disponíveis para consulta, mas novos registros estão bloqueados. Fale com o suporte.`
+    tone = 'border-danger/30 bg-danger/10 text-[#ff8a8a]'
+  } else if (s === 'expired' || s === 'canceled') {
     text = 'Sua assinatura não está ativa. Os dados continuam disponíveis para consulta, mas novos registros estão bloqueados.'
     tone = 'border-danger/30 bg-danger/10 text-[#ff8a8a]'
   } else if (s === 'past_due') {

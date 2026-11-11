@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { StrictMode, Suspense, lazy } from 'react'
 import { createRoot } from 'react-dom/client'
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
@@ -7,7 +7,13 @@ import { AuthProvider } from '@/features/auth/AuthProvider'
 import { ConfirmProvider } from '@/components/ui/dialog'
 import { isAuthError } from '@/lib/errors'
 import { supabase } from '@/lib/supabase'
+import { isAdminEntry } from '@/lib/hosts'
+import { FullscreenLoader } from '@/features/org/OrgProvider'
 import './index.css'
+
+// Painel Super Admin: entrada, roteamento e bundle próprios (admin.voltacerta.com.br ou /admin em dev)
+const AdminRoot = lazy(() => import('@/admin/AdminRoot').then((m) => ({ default: m.AdminRoot })))
+const adminEntry = isAdminEntry(window.location.pathname)
 
 /** Sessão expirada em qualquer consulta => encerra a sessão local (redireciona ao login). */
 const onError = (err: unknown) => {
@@ -31,7 +37,13 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ConfirmProvider>
-          <App />
+          {adminEntry ? (
+            <Suspense fallback={<FullscreenLoader />}>
+              <AdminRoot />
+            </Suspense>
+          ) : (
+            <App />
+          )}
           <Toaster
             theme="dark"
             position="top-right"

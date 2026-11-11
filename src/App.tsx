@@ -10,6 +10,8 @@ import { LandingPage } from '@/pages/LandingPage'
 import { ForgotPasswordPage, LoginPage, ResetPasswordPage, SignupPage } from '@/features/auth/AuthPages'
 import { NotFoundPage, PrivacyPage, TermsPage } from '@/pages/LegalPages'
 import { isSupabaseConfigured } from '@/lib/supabase'
+import { APP_URL, surface } from '@/lib/hosts'
+import { BlockedScreen, useAccountStatus } from '@/features/auth/accountStatus'
 
 // Rotas do painel carregadas sob demanda (bundle inicial menor para a landing)
 const lazyNamed = <T extends Record<string, React.ComponentType>>(loader: () => Promise<T>, name: keyof T) =>
@@ -33,7 +35,24 @@ function RequireAuth() {
   const location = useLocation()
   if (loading) return <FullscreenLoader />
   if (!session) return <Navigate to="/entrar" replace state={{ from: location.pathname }} />
+  return <AccountGate />
+}
+
+/** Bloqueio de conta é decidido no banco; aqui só exibimos o estado. */
+function AccountGate() {
+  const status = useAccountStatus()
+  if (status.isLoading) return <FullscreenLoader />
+  if (status.data?.blocked) return <BlockedScreen reason={status.data.blocked_reason} />
   return <Outlet />
+}
+
+/** No domínio da landing, rotas do painel levam ao subdomínio do app. */
+function ExternalRedirect() {
+  const location = useLocation()
+  React.useEffect(() => {
+    if (APP_URL) window.location.replace(new URL(location.pathname + location.search + location.hash, APP_URL).toString())
+  }, [location])
+  return <FullscreenLoader />
 }
 
 /** Garante que o usuário tem um estabelecimento com onboarding concluído. */
@@ -51,7 +70,7 @@ function RequireOrg() {
   )
 }
 
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { error: Error | null }> {
+export class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null }
   static getDerivedStateFromError(error: Error) {
     return { error }
@@ -74,7 +93,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { err
   }
 }
 
-function NotConfigured() {
+export function NotConfigured() {
   return (
     <div className="grid min-h-dvh place-items-center bg-bg px-5">
       <div className="max-w-md rounded-xl border border-border bg-surface p-6">
@@ -94,10 +113,12 @@ export function App() {
       <BrowserRouter>
         <React.Suspense fallback={<FullscreenLoader />}>
           <Routes>
-            <Route path="/" element={<LandingPage />} />
+            <Route path="/" element={surface === 'app' ? <Navigate to="/app" replace /> : <LandingPage />} />
             <Route path="/privacidade" element={<PrivacyPage />} />
             <Route path="/termos" element={<TermsPage />} />
-            {isSupabaseConfigured ? (
+            {surface === 'site' ? (
+              <Route path="*" element={<ExternalRedirect />} />
+            ) : isSupabaseConfigured ? (
               <>
                 <Route path="/entrar" element={<LoginPage />} />
                 <Route path="/cadastro" element={<SignupPage />} />

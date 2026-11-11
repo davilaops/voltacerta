@@ -1,6 +1,6 @@
 // Tipos de domínio espelhando as tabelas/views do Supabase (ver supabase/migrations).
 
-export type MemberRole = 'owner' | 'admin' | 'staff'
+export type MemberRole = 'owner' | 'admin' | 'employee'
 export type PlanTier = 'inicial' | 'profissional' | 'premium'
 export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired'
 export type PredictionStatus = 'open' | 'contacted' | 'completed' | 'ignored'
@@ -42,6 +42,9 @@ export interface OrgContext {
   trial_ends_at: string | null
   current_period_end: string | null
   can_write: boolean
+  suspended: boolean
+  suspended_reason: string | null
+  trial_started_at: string | null
   customer_limit: number | null
   customer_count: number
   features: { reports_full: boolean; history_advanced: boolean; reports_advanced: boolean }
