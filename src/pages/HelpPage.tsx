@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Card, CardBody, CardHeader } from '@/components/ui/card'
 import { PageHeader } from '@/components/ui/states'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/contact'
 
 const STEPS = [
   { title: '1. Cadastre seus produtos', text: 'Informe a duração média de cada produto (ex.: ração 15 kg dura 35 dias). Esse dado é a base da previsão.', to: '/app/produtos' },
@@ -40,6 +41,15 @@ export function HelpPage() {
               <p className="mt-2 text-[13px] leading-relaxed text-muted">{f.a}</p>
             </details>
           ))}
+        </CardBody>
+      </Card>
+      <Card className="mt-6">
+        <CardHeader title="Precisa de ajuda?" />
+        <CardBody>
+          <p className="text-[13px] text-muted">
+            Fale com o suporte pelo e-mail{' '}
+            <a href={SUPPORT_MAILTO} className="font-medium text-fg underline">{SUPPORT_EMAIL}</a>.
+          </p>
         </CardBody>
       </Card>
     </>

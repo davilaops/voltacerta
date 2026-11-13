@@ -25,6 +25,7 @@ import { AppLink } from '@/components/shared/AppLink'
 import { customerLimitLabel, formatCents, usePlans } from '@/features/billing/plans'
 import { cn } from '@/lib/utils'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/contact'
 
 const NAV = [
   { href: '#como-funciona', label: 'Como funciona' },
@@ -360,6 +361,7 @@ export function LandingPage() {
             <Link to="/privacidade" className="hover:text-fg">Privacidade</Link>
             <Link to="/termos" className="hover:text-fg">Termos de uso</Link>
             <AppLink to="/entrar" className="hover:text-fg">Entrar</AppLink>
+            <a href={SUPPORT_MAILTO} className="hover:text-fg">Contato: {SUPPORT_EMAIL}</a>
           </nav>
           <p className="text-xs text-subtle">© {new Date().getFullYear()} VoltaCerta</p>
         </div>
