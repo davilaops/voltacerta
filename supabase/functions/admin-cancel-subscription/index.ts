@@ -1,4 +1,4 @@
-// Edge Function: Super Admin encerra a assinatura de um estabelecimento.
+// Edge Function: Super Admin encerra a assinatura de um estabelecimento (Asaas ou AbacatePay).
 // 1. Valida o JWT e exige Super Admin (is_super_admin() no banco).
 // 2. Se houver assinatura na AbacatePay no MESMO ambiente da chave atual, cancela lá
 //    (POST /v2/subscriptions/cancel { id } — cancelamento imediato, sem novas cobranças;
@@ -7,6 +7,7 @@
 // Se o cancelamento no gateway falhar, NADA muda no banco (o admin vê o erro e tenta de novo).
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { AbacatePayError, PROVIDER, abacatepay, keyEnvironment } from '../_shared/billing.ts'
+import { ASAAS_PROVIDER, AsaasError, asaas, asaasEnvironment } from '../_shared/asaas.ts'
 
 const ORIGINS = (Deno.env.get('APP_URL') ?? '')
   .split(',')
@@ -56,7 +57,31 @@ Deno.serve(async (req) => {
   if (!sub) return json({ error: 'NOT_FOUND' }, 404)
 
   let providerResult = 'sem assinatura no gateway'
-  if (sub.provider === PROVIDER && sub.provider_subscription_id) {
+  if (sub.provider === ASAAS_PROVIDER && sub.provider_subscription_id) {
+    const apiKey = Deno.env.get('ASAAS_API_KEY') ?? ''
+    if (!apiKey) return json({ error: 'BILLING_NOT_CONFIGURED' }, 503)
+    const keyEnv = asaasEnvironment(apiKey, Deno.env.get('ASAAS_ENV'))
+    const { data: co } = await admin.from('billing_checkouts')
+      .select('dev_mode').eq('provider', ASAAS_PROVIDER).eq('provider_checkout_id', sub.provider_subscription_id).maybeSingle()
+    const subEnv = co?.dev_mode ? 'dev' : 'prod'
+    if (co && keyEnv !== subEnv) {
+      providerResult = `não cancelada no gateway: assinatura de ${subEnv === 'dev' ? 'sandbox' : 'produção'}, chave atual de outro ambiente`
+    } else {
+      try {
+        // DELETE remove a assinatura e as cobranças pendentes; pagamentos já feitos continuam.
+        await asaas(apiKey, keyEnv, 'DELETE', `/subscriptions/${sub.provider_subscription_id}`)
+        providerResult = `asaas: ${sub.provider_subscription_id} removida`
+      } catch (e) {
+        if (e instanceof AsaasError && e.status === 404) {
+          providerResult = `asaas: ${sub.provider_subscription_id} já estava removida`
+        } else {
+          const msg = e instanceof Error ? e.message : String(e)
+          console.error('asaas cancel failed', msg)
+          return json({ error: 'PROVIDER_CANCEL_FAILED', detail: msg.slice(0, 200) }, 502)
+        }
+      }
+    }
+  } else if (sub.provider === PROVIDER && sub.provider_subscription_id) {
     const apiKey = Deno.env.get('ABACATEPAY_API_KEY') ?? ''
     const { data: co } = await admin.from('billing_checkouts')
       .select('dev_mode').eq('organization_id', orgId).eq('status', 'completed')

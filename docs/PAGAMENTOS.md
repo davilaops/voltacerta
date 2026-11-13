@@ -1,4 +1,49 @@
-# Pagamentos — AbacatePay (API v2)
+# Pagamentos
+
+Gateway ativo: **Asaas** (API v3), escolhido porque aceita conta de pessoa física (CPF). A billing-checkout usa o Asaas sempre que `ASAAS_API_KEY` estiver configurada. Sem ela, volta para a AbacatePay (seção mais abaixo, mantida como legado).
+
+## Asaas
+
+### Como funciona
+1. O proprietário clica em **Assinar**. Na primeira vez, o app pede o **CPF ou CNPJ**, porque o Asaas exige o documento para criar o cliente.
+2. A função `billing-checkout`:
+   - valida o login e o papel `owner`;
+   - lê o preço em `plans`;
+   - cria o cliente no Asaas, ou reaproveita o já criado;
+   - grava `billing_checkouts`;
+   - cria a **assinatura mensal** (`POST /v3/subscriptions`, `externalReference` = id do checkout, 1ª cobrança vencendo hoje);
+   - devolve a **fatura** da primeira cobrança (`invoiceUrl`), onde a pessoa paga com Pix, cartão ou boleto.
+3. O Asaas chama a função `asaas-webhook`. Ela confere o header `asaas-access-token` (igual a `BILLING_WEBHOOK_SECRET`) e aplica o evento por `billing_apply_event()`, de forma idempotente.
+
+| Evento do Asaas | Efeito |
+|---|---|
+| `PAYMENT_CONFIRMED` / `PAYMENT_RECEIVED` (cobrança de assinatura) | assinatura `active`, período +1 mês, linha em `payments`. O "recebido" de um pagamento já confirmado não estende o período de novo. |
+| `PAYMENT_OVERDUE`, `PAYMENT_CREDIT_CARD_CAPTURE_REFUSED`, `PAYMENT_REPROVED_BY_RISK_ANALYSIS` | `past_due`, somente se for a assinatura vigente |
+| `PAYMENT_REFUNDED` | pagamento `refunded` |
+| `SUBSCRIPTION_DELETED` / `SUBSCRIPTION_INACTIVATED` | `canceled`, com acesso até o fim do período pago |
+| demais | registrados e ignorados |
+
+Proteções extras:
+- Clicar em Assinar de novo **reaproveita** a fatura pendente do mesmo plano.
+- Uma cobrança abandonada de outro plano é removida no Asaas.
+- Se a 1ª cobrança vencer sem pagamento, a assinatura é removida automaticamente para não gerar novas faturas.
+
+### Configuração
+1. **Chave de API** em *Integrações → Chaves de API*. No Supabase, vá em *Edge Functions → Secrets* e crie `ASAAS_API_KEY`.
+   - Chaves de sandbox contêm `_hmlg_`; as de produção, `_prod_`.
+   - Se a chave não tiver esse marcador, defina `ASAAS_ENV=sandbox` ou `ASAAS_ENV=production`.
+2. **Webhook** em *Integrações → Webhooks → Adicionar*:
+   - **URL:** `https://gvhequjdqlmkonsxqmdf.supabase.co/functions/v1/asaas-webhook`
+   - **Token de autenticação:** o mesmo valor de `BILLING_WEBHOOK_SECRET`
+   - **Versão da API:** v3. **Tipo de envio:** sequencial.
+   - **Eventos:** Cobranças (`PAYMENT_CONFIRMED`, `PAYMENT_RECEIVED`, `PAYMENT_OVERDUE`, `PAYMENT_REFUNDED`, `PAYMENT_CREDIT_CARD_CAPTURE_REFUSED`, `PAYMENT_REPROVED_BY_RISK_ANALYSIS`) e Assinaturas (`SUBSCRIPTION_DELETED`, `SUBSCRIPTION_INACTIVATED`).
+3. Opcional: `ASAAS_BILLING_TYPE`. O padrão `UNDEFINED` deixa a pessoa escolher Pix, cartão ou boleto. Também aceita `PIX`, `CREDIT_CARD` ou `BOLETO`.
+4. **Retorno automático ao app** depois do pagamento: o Asaas só redireciona para o domínio cadastrado em *Minha Conta → Informações → Site*. Sem isso, a assinatura é criada sem redirecionamento, e a pessoa volta ao app manualmente.
+5. **Produção:** troque `ASAAS_API_KEY` pela chave de produção e crie o mesmo webhook na conta de produção. Eventos de sandbox nunca liberam checkouts de produção (`ENVIRONMENT_MISMATCH`).
+
+---
+
+# AbacatePay (legado, API v2)
 
 Assinatura mensal recorrente pelos planos de `public.plans`. O pagamento acontece no checkout hospedado da AbacatePay. **Somente o webhook autenticado ativa um plano**; o navegador nunca marca nada como pago.
 

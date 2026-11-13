@@ -30,6 +30,9 @@ const MESSAGES: Record<string, string> = {
   BILLING_NOT_CONFIGURED: 'Pagamentos ainda não estão configurados neste ambiente.',
   BILLING_ADAPTER_PENDING: 'A integração com o gateway de pagamento ainda não foi concluída.',
   BILLING_PROVIDER_ERROR: 'Não foi possível abrir o pagamento agora. Tente novamente em instantes.',
+  DOCUMENT_REQUIRED: 'Informe o CPF ou CNPJ para gerar a cobrança.',
+  INVALID_DOCUMENT: 'CPF ou CNPJ inválido. Confira os números.',
+  PAYMENT_PROCESSING: 'Seu pagamento já foi recebido e está sendo confirmado. Aguarde alguns minutos e atualize a página.',
   ALREADY_SUBSCRIBED: 'Você já assina este plano.',
   PLAN_CHANGE_REQUIRES_SUPPORT: 'Você já tem uma assinatura ativa. Para trocar de plano, fale com o suporte.',
   CANNOT_DELETE_SELF: 'Você não pode excluir a sua própria conta.',
@@ -37,7 +40,7 @@ const MESSAGES: Record<string, string> = {
   USER_OWNS_ORGANIZATION: 'Esta pessoa é proprietária de um estabelecimento. Exclua o estabelecimento antes.',
   CONFIRMATION_MISMATCH: 'O texto digitado não confere. Confira e tente novamente.',
   SUBSCRIPTION_ACTIVE: 'Há uma assinatura paga em vigor. Encerre a assinatura antes de excluir.',
-  PROVIDER_CANCEL_FAILED: 'A AbacatePay não confirmou o cancelamento. Nada foi alterado; tente novamente.',
+  PROVIDER_CANCEL_FAILED: 'O gateway de pagamento não confirmou o cancelamento. Nada foi alterado; tente novamente.',
   ORG_SUSPENDED: 'Este estabelecimento está suspenso.',
 }
 

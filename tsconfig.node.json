@@ -9,9 +9,10 @@
     "skipLibCheck": true,
     "isolatedModules": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "types": ["node", "vite/client"],
     "jsx": "react-jsx",
     "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["vite.config.ts", "tests", "supabase/functions/_shared/billing.ts"]
+  "include": ["vite.config.ts", "tests", "supabase/functions/_shared/billing.ts", "supabase/functions/_shared/asaas.ts"]
 }

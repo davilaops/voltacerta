@@ -81,7 +81,7 @@ export const ORG_STATUS_FILTERS = [
 
 export type OrgRef = { id: string; name: string } | null
 
-/** Encerrar assinatura: cancela na AbacatePay e corta o acesso imediatamente. */
+/** Encerrar assinatura: cancela no gateway de pagamento e corta o acesso imediatamente. */
 export function CancelSubscriptionDialog({ org, onClose }: { org: OrgRef; onClose: () => void }) {
   const cancel = useCancelSubscription()
   return (
@@ -90,13 +90,13 @@ export function CancelSubscriptionDialog({ org, onClose }: { org: OrgRef; onClos
       onOpenChange={(o) => !o && onClose()}
       danger
       title="Encerrar assinatura"
-      description={`A assinatura de “${org?.name ?? ''}” será cancelada agora: a AbacatePay para de cobrar e o estabelecimento fica somente leitura.`}
+      description={`A assinatura de “${org?.name ?? ''}” será cancelada agora: o gateway de pagamento para de cobrar e o estabelecimento fica somente leitura.`}
       confirmLabel="Encerrar assinatura"
       loading={cancel.isPending}
       onConfirm={(reason) => org && cancel.mutate({ orgId: org.id, reason }, { onSuccess: onClose })}
     >
       <p className="rounded-md border border-warning/25 bg-warning/5 px-3 py-2 text-[13px] text-warning">
-        O cancelamento na AbacatePay é imediato e não pode ser desfeito. Para voltar, o cliente precisa assinar de novo.
+        O cancelamento no gateway é imediato e não pode ser desfeito. Para voltar, o cliente precisa assinar de novo.
       </p>
     </ReasonDialog>
   )

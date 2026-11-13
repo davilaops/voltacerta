@@ -184,7 +184,7 @@ export const PAYMENT_STATUS: Record<AdminPayment['status'], { label: string; ton
   canceled: { label: 'Cancelado', tone: 'muted' },
 }
 
-/** Encerra a assinatura: cancela na AbacatePay (Edge Function) e depois no banco. */
+/** Encerra a assinatura: cancela no gateway (Edge Function) e depois no banco. */
 export function useCancelSubscription() {
   const qc = useQueryClient()
   return useMutation({

@@ -5,6 +5,8 @@ import { useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { Badge, Card, CardBody, CardHeader, Skeleton } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Dialog } from '@/components/ui/dialog'
+import { Field, Input } from '@/components/ui/input'
 import { ErrorState, PageHeader } from '@/components/ui/states'
 import { useOrg } from '@/features/org/OrgProvider'
 import { customerLimitLabel, formatCents, usePlans } from './plans'
@@ -17,9 +19,9 @@ import { useDocumentTitle } from '@/lib/useDocumentTitle'
 import type { PlanTier } from '@/types/models'
 
 /** Chama a Edge Function de checkout. Nunca marca assinatura como paga no cliente. */
-async function startCheckout(orgId: string, plan: PlanTier): Promise<string> {
+async function startCheckout(orgId: string, plan: PlanTier, document?: string): Promise<string> {
   const { data, error } = await supabase.functions.invoke<{ url?: string; error?: string }>('billing-checkout', {
-    body: { organization_id: orgId, plan },
+    body: { organization_id: orgId, plan, ...(document ? { document } : {}) },
   })
   if (error) {
     let code = error.message
@@ -61,12 +63,23 @@ export function PlanPage() {
     if (confirmed) toast.success('Pagamento confirmado. Sua assinatura está ativa!')
   }, [confirmed])
 
-  const subscribe = async (plan: PlanTier) => {
+  // CPF/CNPJ é exigido pelo gateway só na primeira assinatura (depois o cliente é reaproveitado).
+  const [docPlan, setDocPlan] = React.useState<PlanTier | null>(null)
+  const [doc, setDoc] = React.useState('')
+  const docDigits = doc.replace(/\D/g, '')
+
+  const subscribe = async (plan: PlanTier, document?: string) => {
     setPending(plan)
     try {
-      window.location.href = await startCheckout(org.id, plan)
+      window.location.href = await startCheckout(org.id, plan, document)
     } catch (e) {
-      toast.error(errorMessage(e))
+      const code = e instanceof Error ? e.message : ''
+      if (code === 'DOCUMENT_REQUIRED') {
+        setDoc('')
+        setDocPlan(plan)
+      } else {
+        toast.error(errorMessage(e))
+      }
     } finally {
       setPending(null)
     }
@@ -97,7 +110,7 @@ export function PlanPage() {
           <span className="flex-1">
             {confirmed
               ? 'Pagamento confirmado. Sua assinatura está ativa.'
-              : 'Recebemos seu retorno do pagamento. Aguardando a confirmação da AbacatePay. Isso costuma levar poucos segundos (Pix pode levar alguns minutos).'}
+              : 'Recebemos seu retorno do pagamento. Aguardando a confirmação do pagamento. Isso costuma levar poucos segundos (Pix pode levar alguns minutos).'}
           </span>
           <button type="button" className="text-xs underline" onClick={() => setParams({}, { replace: true })}>Fechar</button>
         </div>
@@ -105,7 +118,7 @@ export function PlanPage() {
       {!returned && (
         <div className="mb-6 flex gap-3 rounded-md border border-border px-4 py-3 text-[13px] text-muted">
           <Info className="mt-0.5 size-4 shrink-0" />
-          O pagamento é feito na página segura da AbacatePay. A assinatura muda para “Ativa” assim que a AbacatePay confirmar a cobrança.
+          O pagamento é feito na página segura do Asaas, por Pix, cartão ou boleto. A assinatura muda para “Ativa” assim que o pagamento for confirmado.
         </div>
       )}
 
@@ -145,6 +158,29 @@ export function PlanPage() {
               })}
         </div>
       )}
+      <Dialog
+        open={!!docPlan}
+        onOpenChange={(o) => !o && setDocPlan(null)}
+        title="CPF ou CNPJ para a cobrança"
+        description="O emissor da cobrança exige o documento do responsável pelo pagamento. Pedimos só na primeira assinatura."
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setDocPlan(null)}>Cancelar</Button>
+            <Button
+              disabled={docDigits.length !== 11 && docDigits.length !== 14}
+              loading={!!docPlan && pending === docPlan}
+              onClick={() => docPlan && subscribe(docPlan, docDigits)}
+            >
+              Continuar para o pagamento
+            </Button>
+          </>
+        }
+      >
+        <Field label="CPF ou CNPJ" htmlFor="billing-doc" hint="Somente números ou com pontuação. Use o CNPJ se a loja tiver.">
+          <Input id="billing-doc" inputMode="numeric" autoComplete="off" autoFocus maxLength={18} value={doc} onChange={(e) => setDoc(e.target.value)} />
+        </Field>
+      </Dialog>
       <p className="mt-6 text-center text-xs text-subtle">Valores mensais em reais. Cancele quando quiser. Durante o teste você tem acesso aos recursos do plano Profissional.</p>
     </>
   )
