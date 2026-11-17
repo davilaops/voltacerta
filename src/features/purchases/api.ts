@@ -31,7 +31,7 @@ export function usePurchases(params: { from: string; to: string; page: number })
     queryFn: async () => {
       const { data, count, error } = await supabase
         .from('purchases')
-        .select('*, customers(full_name), purchase_items(*, products(name, category))', { count: 'exact' })
+        .select('*, customers(full_name), purchase_items(*, products(name, category)), purchase_services(*)', { count: 'exact' })
         .eq('organization_id', org.id)
         .gte('purchase_date', params.from)
         .lte('purchase_date', params.to)
@@ -45,7 +45,7 @@ export function usePurchases(params: { from: string; to: string; page: number })
 }
 
 function invalidateAfterPurchase(qc: ReturnType<typeof useQueryClient>) {
-  for (const key of ['purchases', 'predictions', 'customers', 'customer', 'dashboard', 'recovery', 'reports']) {
+  for (const key of ['purchases', 'predictions', 'customers', 'customer', 'dashboard', 'recovery', 'reports', 'finance', 'stock', 'stock-movements', 'products', 'appointments', 'customer-insights', 'customer-packages', 'cash']) {
     qc.invalidateQueries({ queryKey: [key] })
   }
 }

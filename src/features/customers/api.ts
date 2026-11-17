@@ -80,7 +80,7 @@ export function useCustomerPurchases(customerId: string | undefined) {
       unwrap(
         await supabase
           .from('purchases')
-          .select('*, purchase_items(*, products(name, category))')
+          .select('*, purchase_items(*, products(name, category)), purchase_services(*)')
           .eq('customer_id', customerId!)
           .order('purchase_date', { ascending: false })
           .order('created_at', { ascending: false })

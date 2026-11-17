@@ -4,6 +4,8 @@ import { toast } from 'sonner'
 import {
   ArrowLeft,
   CalendarClock,
+  CalendarPlus,
+  Gift,
   Download,
   EllipsisVertical,
   Mail,
@@ -46,6 +48,9 @@ import { downloadFile } from '@/lib/csv'
 import { errorMessage } from '@/lib/errors'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
 import type { Pet, PredictionView } from '@/types/models'
+import { AppointmentDialog } from '@/features/agenda/AppointmentDialogs'
+import { SellPackageDialog } from '@/features/services/ServicesPage'
+import { AppointmentsList, InsightsCard, PackagesCard } from './CustomerExtras'
 
 export function CustomerDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -66,6 +71,8 @@ export function CustomerDetailPage() {
   const [petDialog, setPetDialog] = React.useState<{ open: boolean; pet: Pet | null }>({ open: false, pet: null })
   const [purchaseOpen, setPurchaseOpen] = React.useState(false)
   const [contact, setContact] = React.useState<ContactTarget | null>(null)
+  const [scheduleOpen, setScheduleOpen] = React.useState(false)
+  const [sellOpen, setSellOpen] = React.useState(false)
   useDocumentTitle(customer.data?.full_name ?? 'Cliente')
 
   if (customer.isLoading) {
@@ -162,6 +169,9 @@ export function CustomerDetailPage() {
               <Button variant="secondary" size="icon" aria-label="Mais ações"><EllipsisVertical /></Button>
             </MenuTrigger>
             <MenuContent>
+              <MenuItem onSelect={() => setScheduleOpen(true)}><CalendarPlus /> Agendar atendimento</MenuItem>
+              <MenuItem onSelect={() => setSellOpen(true)}><Gift /> Vender pacote</MenuItem>
+              <MenuSeparator />
               <MenuItem onSelect={() => setEditOpen(true)}><Pencil /> Editar cadastro</MenuItem>
               <MenuItem onSelect={onExport}><Download /> Exportar dados (LGPD)</MenuItem>
               {isAdmin && (
@@ -221,10 +231,13 @@ export function CustomerDetailPage() {
             )}
           </Card>
 
+          <InsightsCard customerId={c.id} />
+
           <Card>
             <Tabs defaultValue="compras">
               <TabsList className="px-3 pt-1">
                 <TabsTrigger value="compras" count={purchases.data?.length}>Compras</TabsTrigger>
+                <TabsTrigger value="atendimentos">Atendimentos</TabsTrigger>
                 <TabsTrigger value="contatos" count={contacts.data?.length}>Contatos</TabsTrigger>
                 <TabsTrigger value="recuperadas" count={recovered.length}>Vendas recuperadas</TabsTrigger>
               </TabsList>
@@ -245,6 +258,9 @@ export function CustomerDetailPage() {
                           <ul className="mt-1 space-y-0.5 text-xs text-muted">
                             {p.purchase_items?.map((it) => (
                               <li key={it.id}>{formatNumber(it.quantity)}× {it.products?.name} · {formatCurrency(it.unit_price)}</li>
+                            ))}
+                            {p.purchase_services?.map((it) => (
+                              <li key={it.id}>{formatNumber(it.quantity)}× {it.description} · {formatCurrency(it.unit_price)}</li>
                             ))}
                           </ul>
                           {p.notes && <p className="mt-1 text-xs text-subtle">{p.notes}</p>}
@@ -267,6 +283,7 @@ export function CustomerDetailPage() {
                   </ul>
                 )}
               </TabsContent>
+              <TabsContent value="atendimentos"><AppointmentsList customerId={c.id} /></TabsContent>
               <TabsContent value="contatos">
                 {contacts.isLoading ? (
                   <CardBody className="pt-4"><Skeleton className="h-24 w-full" /></CardBody>
@@ -341,6 +358,8 @@ export function CustomerDetailPage() {
             </CardBody>
           </Card>
 
+          <PackagesCard customerId={c.id} onSell={() => setSellOpen(true)} />
+
           <Card>
             <CardHeader title="Produtos que costuma comprar" />
             <CardBody>
@@ -386,6 +405,8 @@ export function CustomerDetailPage() {
       />
       <PurchaseDialog open={purchaseOpen} onOpenChange={setPurchaseOpen} customer={{ id: c.id, full_name: c.full_name }} />
       <ContactDialog target={contact} onClose={() => setContact(null)} />
+      <AppointmentDialog open={scheduleOpen} onOpenChange={setScheduleOpen} defaults={{ customer: { id: c.id, full_name: c.full_name, phone: c.phone } }} />
+      <SellPackageDialog open={sellOpen} onOpenChange={setSellOpen} customer={{ id: c.id, full_name: c.full_name, phone: c.phone }} />
     </>
   )
 }

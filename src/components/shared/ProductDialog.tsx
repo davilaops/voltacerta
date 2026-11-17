@@ -13,6 +13,7 @@ const SUGGESTED_DAYS: Record<string, number> = { racoes: 30, petiscos: 15, areia
 
 const empty: ProductFormValues = {
   name: '', category: 'racoes', brand: '', sku: '', price: '', cost: '', size_value: '', unit: 'kg', description: '', avg_duration_days: '30', active: true,
+  track_stock: false, min_stock: '', supplier: '', lead_time_days: '7', catalog_visible: false, ncm: '', cfop: '5102', fiscal_origin: '0',
 }
 
 export function ProductDialog({ open, onOpenChange, product, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; product?: Product | null; onSaved?: (p: Product) => void }) {
@@ -36,6 +37,14 @@ export function ProductDialog({ open, onOpenChange, product, onSaved }: { open: 
             description: product.description ?? '',
             avg_duration_days: product.avg_duration_days == null ? '' : String(product.avg_duration_days),
             active: product.active,
+            track_stock: product.track_stock,
+            min_stock: product.min_stock == null ? '' : String(product.min_stock).replace('.', ','),
+            supplier: product.supplier ?? '',
+            lead_time_days: String(product.lead_time_days ?? 7),
+            catalog_visible: product.catalog_visible,
+            ncm: product.ncm ?? '',
+            cfop: product.cfop ?? '5102',
+            fiscal_origin: String(product.fiscal_origin ?? 0),
           }
         : empty,
     )
@@ -123,6 +132,40 @@ export function ProductDialog({ open, onOpenChange, product, onSaved }: { open: 
         <Field label="Descrição" htmlFor="description" optional>
           <Textarea id="description" rows={2} {...form.register('description')} />
         </Field>
+        <details className="group rounded-md border border-border" open={form.watch('track_stock')}>
+          <summary className="cursor-pointer list-none px-3 py-2.5 text-[13px] font-medium">Estoque e fornecedor</summary>
+          <div className="space-y-4 border-t border-border p-3">
+            <Checkbox label="Controlar estoque deste produto" description="As vendas baixam o saldo automaticamente. O saldo é ajustado na tela Estoque." {...form.register('track_stock')} />
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+              <Field label="Estoque mínimo" htmlFor="min_stock" optional error={e.min_stock?.message}>
+                <Input id="min_stock" inputMode="decimal" {...form.register('min_stock')} />
+              </Field>
+              <Field label="Prazo de entrega (dias)" htmlFor="lead_time_days" error={e.lead_time_days?.message}>
+                <Input id="lead_time_days" inputMode="numeric" {...form.register('lead_time_days')} />
+              </Field>
+              <Field label="Fornecedor" htmlFor="supplier" optional className="col-span-2 sm:col-span-1">
+                <Input id="supplier" {...form.register('supplier')} />
+              </Field>
+            </div>
+          </div>
+        </details>
+        <details className="group rounded-md border border-border">
+          <summary className="cursor-pointer list-none px-3 py-2.5 text-[13px] font-medium">Dados fiscais (para nota fiscal)</summary>
+          <div className="grid grid-cols-3 gap-4 border-t border-border p-3">
+            <Field label="NCM" htmlFor="ncm" optional error={e.ncm?.message} hint="Ex.: ração 23091000">
+              <Input id="ncm" inputMode="numeric" maxLength={8} {...form.register('ncm')} />
+            </Field>
+            <Field label="CFOP" htmlFor="cfop" error={e.cfop?.message} hint="Venda: 5102">
+              <Input id="cfop" inputMode="numeric" maxLength={4} {...form.register('cfop')} />
+            </Field>
+            <Field label="Origem" htmlFor="fiscal_origin" hint="0 = nacional">
+              <Select id="fiscal_origin" {...form.register('fiscal_origin')}>
+                {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((o) => <option key={o} value={o}>{o}</option>)}
+              </Select>
+            </Field>
+          </div>
+        </details>
+        <Checkbox label="Mostrar no catálogo online" description="Aparece na página pública da loja, se o catálogo estiver publicado." {...form.register('catalog_visible')} />
         <Checkbox label="Produto ativo" description="Produtos inativos não aparecem no registro de compras." {...form.register('active')} />
       </form>
     </Dialog>

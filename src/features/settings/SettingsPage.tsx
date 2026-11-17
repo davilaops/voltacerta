@@ -1,5 +1,5 @@
 import { NavLink, Navigate, useParams } from 'react-router-dom'
-import { Building2, MessageSquareText, RefreshCcw, ShieldCheck, UserRound, UsersRound } from 'lucide-react'
+import { Building2, CalendarDays, Globe, MessageSquareText, Plug, RefreshCcw, ShieldCheck, UserRound, UsersRound } from 'lucide-react'
 import { PageHeader } from '@/components/ui/states'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
 import { cn } from '@/lib/utils'
@@ -9,12 +9,18 @@ import { PredictionSettings } from './PredictionSettings'
 import { TemplateSettings } from './TemplateSettings'
 import { TeamSettings } from './TeamSettings'
 import { PrivacySettings } from './PrivacySettings'
+import { AgendaSettings } from './AgendaSettings'
+import { StoreSettings } from './StoreSettings'
+import { IntegrationSettings } from './IntegrationSettings'
 
 const TABS = [
   { id: 'estabelecimento', label: 'Estabelecimento', icon: Building2, el: OrganizationSettings },
   { id: 'perfil', label: 'Perfil', icon: UserRound, el: ProfileSettings },
   { id: 'recompras', label: 'Recompras', icon: RefreshCcw, el: PredictionSettings },
   { id: 'mensagens', label: 'Mensagens', icon: MessageSquareText, el: TemplateSettings },
+  { id: 'agenda', label: 'Agenda e lembretes', icon: CalendarDays, el: AgendaSettings },
+  { id: 'loja-online', label: 'Loja online', icon: Globe, el: StoreSettings },
+  { id: 'integracoes', label: 'Integrações', icon: Plug, el: IntegrationSettings },
   { id: 'equipe', label: 'Equipe', icon: UsersRound, el: TeamSettings },
   { id: 'privacidade', label: 'Privacidade e dados', icon: ShieldCheck, el: PrivacySettings },
 ] as const

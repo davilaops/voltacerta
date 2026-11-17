@@ -42,6 +42,33 @@ const MESSAGES: Record<string, string> = {
   SUBSCRIPTION_ACTIVE: 'Há uma assinatura paga em vigor. Encerre a assinatura antes de excluir.',
   PROVIDER_CANCEL_FAILED: 'O gateway de pagamento não confirmou o cancelamento. Nada foi alterado; tente novamente.',
   ORG_SUSPENDED: 'Este estabelecimento está suspenso.',
+  // Módulos de gestão
+  INVALID_QUANTITY: 'Quantidade inválida.',
+  SERVICE_NOT_FOUND: 'Serviço não encontrado.',
+  PET_NOT_FOUND: 'Pet não encontrado para este cliente.',
+  PROFESSIONAL_NOT_FOUND: 'Profissional não encontrado.',
+  PACKAGE_NOT_FOUND: 'Pacote não encontrado.',
+  PACKAGE_UNAVAILABLE: 'Este pacote não está disponível (vencido, encerrado ou de outro serviço).',
+  PACKAGE_IN_USE: 'O pacote desta venda já teve sessões usadas. Cancele o pacote em vez de excluir a venda.',
+  SCHEDULE_CONFLICT: 'Este profissional já tem um atendimento neste horário.',
+  INVALID_DURATION: 'Duração inválida.',
+  CASH_SESSION_REQUIRED: 'Abra o caixa para registrar vendas no balcão.',
+  CASH_SESSION_ALREADY_OPEN: 'Já existe um caixa aberto.',
+  INVALID_AMOUNT: 'Valor inválido.',
+  INVALID_PAYMENT: 'Verifique as formas de pagamento.',
+  PAYMENT_MISMATCH: 'A soma dos pagamentos precisa ser igual ao total da venda.',
+  FIADO_REQUIRES_CUSTOMER: 'Para vender fiado, selecione o cliente.',
+  INVALID_ENTRY: 'Verifique os dados do lançamento.',
+  ENTRY_LOCKED: 'Este lançamento veio de uma venda. Para corrigir, exclua ou ajuste a venda.',
+  SLUG_RESERVED: 'Este endereço é reservado. Escolha outro.',
+  INVALID_HOURS: 'Horário de funcionamento inválido (a abertura deve ser antes do fechamento).',
+  organizations_public_slug_required: 'Defina o endereço da sua loja antes de publicar.',
+  INVALID_INPUT: 'Dados inválidos.',
+  INTEGRATION_INCOMPLETE: 'Preencha todos os dados obrigatórios (inclusive o token) antes de ativar.',
+  FISCAL_NOT_CONFIGURED: 'Configure a emissão de notas em Configurações → Integrações.',
+  FISCAL_DATA_MISSING: 'Faltam dados fiscais (ex.: NCM dos produtos). Complete o cadastro e tente de novo.',
+  FISCAL_NO_ITEMS: 'Esta venda não tem itens para este tipo de nota.',
+  INVOICE_ALREADY_ISSUED: 'Já existe uma nota emitida para esta venda.',
 }
 
 const CONSTRAINTS: Record<string, string> = {
@@ -49,6 +76,8 @@ const CONSTRAINTS: Record<string, string> = {
   products_org_sku_uq: 'Já existe um produto com este código/SKU.',
   organization_invitations_pending_uq: 'Já existe um convite pendente para este e-mail.',
   data_deletion_requests_pending_uq: 'Já existe uma solicitação em andamento.',
+  organizations_public_slug_key: 'Este endereço já está em uso por outra loja.',
+  cash_sessions_open_uq: 'Já existe um caixa aberto.',
 }
 
 const AUTH: Record<string, string> = {

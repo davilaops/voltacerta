@@ -12,6 +12,7 @@
 import http from 'node:http'
 import { randomUUID } from 'node:crypto'
 import { createAdminDemo, plans } from './demo-admin.mjs'
+import { createModulesDemo } from './demo-modules.mjs'
 
 const PORT = 54321
 const TZ = 'America/Sao_Paulo'
@@ -153,6 +154,8 @@ const templates = [
   ['Recompra', 'recompra', 'Olá, {nome}! Está chegando o período de reposição de {produto}. Se precisar, podemos deixar seu pedido preparado!'],
 ].map(([name, kind, body]) => ({ id: randomUUID(), organization_id: ORG_ID, name, kind, body, is_default: true, created_at: ts(addDays(today, -60)) }))
 
+const modules = createModulesDemo({ today, addDays, ts, org, products, customers, pets, purchases, predictions, contacts, templates, ORG_ID, TZ })
+
 // ---------- views derivadas ----------
 function stageOf(p) {
   if (p.status === 'contacted') return 'contatada'
@@ -181,7 +184,7 @@ function vCustomers() {
     return {
       ...c, pet_names: myPets.map((p) => p.name).join(', '), pet_count: myPets.length, purchases_count: ps.length,
       total_spent: Math.round(ps.reduce((s, p) => s + p.total, 0) * 100) / 100, last_purchase_date: last,
-      last_product_name: ps[0]?.purchase_items[0].products.name ?? null, next_expected_date: next, situation,
+      last_product_name: ps.find((p) => p.purchase_items?.length)?.purchase_items[0].products.name ?? null, next_expected_date: next, situation,
     }
   })
 }
@@ -189,7 +192,7 @@ function vCustomers() {
 const ctx = () => ({
   role: 'owner', plan: 'profissional', status: 'trialing', effective_status: 'trialing', trial_ends_at: ts(addDays(today, 9)),
   current_period_end: null, can_write: true, suspended: false, suspended_reason: null, trial_started_at: ts(addDays(today, -5)), customer_limit: 500, customer_count: customers.length,
-  features: { reports_full: true, history_advanced: true, reports_advanced: false }, today,
+  features: { reports_full: true, history_advanced: true, reports_advanced: false }, today, ...modules.ctxExtra(),
 })
 
 function dashboard(from, to) {
@@ -202,7 +205,7 @@ function dashboard(from, to) {
   const situations = {}
   vc.forEach((c) => (situations[c.situation] = (situations[c.situation] ?? 0) + 1))
   const activity = [
-    ...purchases.map((p) => ({ type: 'purchase', at: p.created_at, customer_name: p.customers.full_name, customer_id: p.customer_id, amount: p.total, detail: null })),
+    ...purchases.filter((p) => p.customers).map((p) => ({ type: 'purchase', at: p.created_at, customer_name: p.customers.full_name, customer_id: p.customer_id, amount: p.total, detail: null })),
     ...contacts.map((c) => ({ type: 'contact', at: c.contacted_at, customer_name: c.customers.full_name, customer_id: c.customer_id, amount: null, detail: c.result })),
     ...customers.map((c) => ({ type: 'customer', at: c.created_at, customer_name: c.full_name, customer_id: c.id, amount: null, detail: null })),
   ].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 10)
@@ -256,6 +259,7 @@ function report(kind, from, to) {
       const by = {}
       ps.forEach((p) => {
         const c = customers.find((x) => x.id === p.customer_id)
+        if (!c) return
         by[c.id] ??= { customer: c.full_name, phone: c.phone, purchases: 0, revenue: 0, last_purchase: p.purchase_date }
         by[c.id].purchases++
         by[c.id].revenue += p.total
@@ -301,15 +305,17 @@ const tables = {
   data_deletion_requests: () => [],
   subscriptions: () => [],
   plans: () => plans,
+  ...modules.tables,
 }
 
 // Tabelas base que aceitam escrita no modo demonstração (as views derivam delas)
-const writable = { products, customers, pets, message_templates: templates, organizations: [org] }
+const writable = { products, customers, pets, message_templates: templates, organizations: [org], ...modules.writable }
 const writeDefaults = {
   products: { active: true, unit: 'un', category: 'outros', price: 0 },
   customers: { marketing_consent: false, do_not_contact: false, notes: null, email: null },
   pets: { species: 'cao', breed: null, birth_date: null, notes: null },
   message_templates: { kind: 'custom', is_default: false },
+  ...modules.writeDefaults,
 }
 
 function applyFilters(rows, params) {
@@ -339,7 +345,7 @@ function applyFilters(rows, params) {
   const or = params.get('or')
   if (or) {
     const terms = or.replace(/^\(|\)$/g, '').split(',').map((t) => t.match(/^(\w+)\.ilike\.(.*)$/)).filter(Boolean)
-    out = out.filter((r) => terms.some(([, k, v]) => r[k] != null && new RegExp('^' + v.replace(/[%*]/g, '.*') + '$', 'i').test(String(r[k]))))
+    if (terms.length) out = out.filter((r) => terms.some(([, k, v]) => r[k] != null && new RegExp('^' + v.replace(/[%*]/g, '.*') + '$', 'i').test(String(r[k]))))
   }
   const order = params.get('order')
   if (order) {
@@ -397,6 +403,8 @@ const server = http.createServer(async (req, res) => {
       return send(res, e.status ?? 400, { error: e.message })
     }
   }
+  const fnResult = modules.functions(path, req.method, url, body)
+  if (fnResult) return send(res, fnResult[0], fnResult[1])
   if (path.startsWith('/functions/v1/')) return send(res, 503, { error: 'BILLING_NOT_CONFIGURED' })
 
   // RPC
@@ -405,6 +413,13 @@ const server = http.createServer(async (req, res) => {
     if (adminDemo.rpc[fn]) {
       try {
         return send(res, 200, adminDemo.rpc[fn](body ?? {}) ?? null)
+      } catch (e) {
+        return send(res, e.status ?? 400, { message: e.message })
+      }
+    }
+    if (modules.rpc[fn]) {
+      try {
+        return send(res, 200, modules.rpc[fn](body ?? {}) ?? null)
       } catch (e) {
         return send(res, e.status ?? 400, { message: e.message })
       }

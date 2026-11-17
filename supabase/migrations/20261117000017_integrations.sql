@@ -344,6 +344,42 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------
+-- Contexto da organização: inclui quais integrações estão ativas (sem
+-- segredos) para o painel mostrar os botões de nota fiscal e WhatsApp.
+-- ---------------------------------------------------------------------
+create or replace function public.get_org_context(p_org uuid)
+returns jsonb language plpgsql stable security definer set search_path = '' as $$
+declare v jsonb;
+begin
+  perform public._assert_member(p_org);
+  select jsonb_build_object(
+    'role', (select role from public.organization_members where organization_id = p_org and user_id = auth.uid()),
+    'plan', s.plan,
+    'status', s.status,
+    'effective_status', public.subscription_effective_status(p_org),
+    'trial_started_at', s.trial_started_at,
+    'trial_ends_at', s.trial_ends_at,
+    'current_period_end', s.current_period_end,
+    'can_write', public.org_can_write(p_org),
+    'suspended', o.suspended_at is not null,
+    'suspended_reason', o.suspended_reason,
+    'customer_limit', public.plan_customer_limit(s.plan),
+    'customer_count', (select count(*) from public.customers where organization_id = p_org),
+    'features', jsonb_build_object(
+      'reports_full', public.plan_allows(p_org, 'reports_full'),
+      'history_advanced', public.plan_allows(p_org, 'history_advanced'),
+      'reports_advanced', public.plan_allows(p_org, 'reports_advanced')),
+    'integrations', jsonb_build_object(
+      'fiscal', coalesce((select fiscal_enabled from public.org_integrations where organization_id = p_org), false),
+      'whatsapp', coalesce((select whatsapp_enabled from public.org_integrations where organization_id = p_org), false)),
+    'today', public.org_today(p_org)
+  ) into v
+  from public.subscriptions s join public.organizations o on o.id = s.organization_id
+  where s.organization_id = p_org;
+  return v;
+end $$;
+
+-- ---------------------------------------------------------------------
 -- Exclusão definitiva do estabelecimento (Super Admin): remove antes os
 -- registros dos novos módulos que referenciam produtos e serviços.
 -- ---------------------------------------------------------------------

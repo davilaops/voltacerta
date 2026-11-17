@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { SegmentsCard } from './SegmentsCard'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { BarChart3, Download, Lock } from 'lucide-react'
@@ -165,6 +166,7 @@ export function ReportsPage() {
           )}
         </Card>
       </div>
+      <SegmentsCard />
     </>
   )
 }

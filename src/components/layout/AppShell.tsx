@@ -1,6 +1,12 @@
 import * as React from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
+  BellRing,
+  Boxes,
+  CalendarDays,
+  Landmark,
+  Receipt,
+  Scissors,
   BarChart3,
   Check,
   ChevronsUpDown,
@@ -34,25 +40,37 @@ interface NavItem {
   label: string
   icon: LucideIcon
   end?: boolean
+  /** Título da seção exibido antes deste item */
+  section?: string
+  adminOnly?: boolean
 }
 
 export const NAV: NavItem[] = [
   { to: '/app', label: 'Visão geral', icon: LayoutDashboard, end: true },
   { to: '/app/clientes', label: 'Clientes', icon: Users },
-  { to: '/app/produtos', label: 'Produtos', icon: Package },
-  { to: '/app/compras', label: 'Compras', icon: ShoppingBag },
-  { to: '/app/recompras', label: 'Recompras', icon: RefreshCcw },
+  { to: '/app/recompras', label: 'Recompras', icon: RefreshCcw, section: 'Relacionamento' },
   { to: '/app/recuperacao', label: 'Recuperação de clientes', icon: MessageCircle },
+  { to: '/app/lembretes', label: 'Lembretes', icon: BellRing },
+  { to: '/app/agenda', label: 'Agenda', icon: CalendarDays, section: 'Atendimento' },
+  { to: '/app/servicos', label: 'Serviços e pacotes', icon: Scissors },
+  { to: '/app/caixa', label: 'Caixa', icon: Receipt, section: 'Vendas e estoque' },
+  { to: '/app/compras', label: 'Compras', icon: ShoppingBag },
+  { to: '/app/produtos', label: 'Produtos', icon: Package },
+  { to: '/app/estoque', label: 'Estoque', icon: Boxes },
+  { to: '/app/financeiro', label: 'Financeiro', icon: Landmark, section: 'Gestão', adminOnly: true },
   { to: '/app/relatorios', label: 'Relatórios', icon: BarChart3 },
   { to: '/app/configuracoes', label: 'Configurações', icon: Settings },
 ]
 
-const MOBILE_NAV = [NAV[0], NAV[1], NAV[4], NAV[5]]
+const MOBILE_NAV = [NAV[0], NAV[5], NAV[7], NAV[3]]
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+  const { isAdmin } = useOrg()
   return (
     <nav className="flex flex-col gap-0.5" aria-label="Navegação principal">
-      {NAV.map(({ to, label, icon: Icon, end }) => (
+      {NAV.filter((n) => isAdmin || !n.adminOnly).map(({ to, label, icon: Icon, end, section }) => (
+        <React.Fragment key={to}>
+        {section && <div className="mt-3 px-2.5 pb-1 text-[10.5px] font-semibold uppercase tracking-wider text-subtle">{section}</div>}
         <NavLink
           key={to}
           to={to}
@@ -72,6 +90,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             </>
           )}
         </NavLink>
+        </React.Fragment>
       ))}
     </nav>
   )

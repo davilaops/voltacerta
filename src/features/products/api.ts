@@ -37,6 +37,19 @@ export const productSchema = z.object({
     .transform((v) => (v === '' || v == null ? null : Number(v)))
     .pipe(z.number().int('Use dias inteiros').min(1, 'Mínimo 1 dia').max(365, 'Máximo 365 dias').nullable()),
   active: z.boolean(),
+  // Estoque, catálogo e dados fiscais (opcionais)
+  track_stock: z.boolean().default(false),
+  min_stock: z
+    .union([z.string(), z.number()])
+    .optional()
+    .transform((v) => (v === '' || v == null ? null : Number(String(v).replace(',', '.'))))
+    .pipe(z.number().min(0, 'Valor inválido').nullable()),
+  supplier: z.string().trim().max(120).optional().or(z.literal('')),
+  lead_time_days: z.coerce.number<string | number>().int('Use dias inteiros').min(0, 'Mínimo 0').max(120, 'Máximo 120').default(7),
+  catalog_visible: z.boolean().default(false),
+  ncm: z.string().trim().regex(/^(\d{8})?$/, 'O NCM tem 8 dígitos').optional().or(z.literal('')),
+  cfop: z.string().trim().regex(/^\d{4}$/, 'O CFOP tem 4 dígitos').default('5102'),
+  fiscal_origin: z.coerce.number<string | number>().int().min(0).max(8).default(0),
 })
 export type ProductFormValues = z.input<typeof productSchema>
 export type ProductInput = z.output<typeof productSchema>
@@ -58,7 +71,7 @@ export function useSaveProduct() {
   const { org } = useOrg()
   return useMutation({
     mutationFn: async ({ id, values }: { id?: string; values: ProductInput; successMessage?: string }) => {
-      const row = { ...values, brand: values.brand || null, sku: values.sku || null, description: values.description || null }
+      const row = { ...values, brand: values.brand || null, sku: values.sku || null, description: values.description || null, supplier: values.supplier || null, ncm: values.ncm || null }
       if (id) return unwrap(await supabase.from('products').update(row).eq('id', id).select().single()) as Product
       return unwrap(await supabase.from('products').insert({ ...row, organization_id: org.id }).select().single()) as Product
     },

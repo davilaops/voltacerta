@@ -40,6 +40,8 @@ export function ProductsPage() {
       values: {
         name: p.name, category: p.category, brand: p.brand ?? '', sku: p.sku ?? '', price: Number(p.price), cost: p.cost == null ? null : Number(p.cost),
         size_value: p.size_value == null ? null : Number(p.size_value), unit: p.unit, description: p.description ?? '', avg_duration_days: p.avg_duration_days, active: !p.active,
+        track_stock: p.track_stock, min_stock: p.min_stock == null ? null : Number(p.min_stock), supplier: p.supplier ?? '', lead_time_days: p.lead_time_days ?? 7,
+        catalog_visible: p.catalog_visible, ncm: p.ncm ?? '', cfop: p.cfop ?? '5102', fiscal_origin: p.fiscal_origin ?? 0,
       },
       successMessage: p.active
         ? `${p.name} desativado. Ele não aparece mais no registro de compras e fica no filtro "Inativos".`
@@ -111,7 +113,7 @@ export function ProductsPage() {
           <EmptyState icon={Search} title="Nenhum produto encontrado" description="Ajuste a busca ou os filtros." />
         ) : (
           <DataTable
-            head={<><th>Produto</th><th>Categoria</th><th>Preço</th><th>Tamanho</th><th>Duração média</th><th>Status</th><th className="w-12" /></>}
+            head={<><th>Produto</th><th>Categoria</th><th>Preço</th><th>Tamanho</th><th>Estoque</th><th>Duração média</th><th>Status</th><th className="w-12" /></>}
             mobile={rows.map((p) => (
               <div key={p.id} className="flex items-start gap-3 px-4 py-3.5">
                 <div className="min-w-0 flex-1">
@@ -132,6 +134,11 @@ export function ProductsPage() {
                 <td className="text-muted">{CATEGORY[p.category]}</td>
                 <td className="tabular">{formatCurrency(p.price)}</td>
                 <td className="tabular text-muted">{p.size_value ? `${formatNumber(p.size_value)} ${UNIT[p.unit]}` : '—'}</td>
+                <td className="tabular">
+                  {p.track_stock ? (
+                    <span className={Number(p.stock_qty) <= Number(p.min_stock ?? 0) ? 'font-medium text-warning' : ''}>{formatNumber(p.stock_qty)} un.</span>
+                  ) : <span className="text-xs text-subtle">não controlado</span>}
+                </td>
                 <td className="tabular">{duration(p)}</td>
                 <td>{p.active ? <Badge tone="brand" dot>Ativo</Badge> : <Badge tone="muted">Inativo</Badge>}</td>
                 <td>{actions(p)}</td>

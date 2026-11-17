@@ -15,8 +15,8 @@ import { BlockedScreen, useAccountStatus } from '@/features/auth/accountStatus'
 import { isChunkLoadError, reloadForNewVersion } from '@/lib/chunkReload'
 
 // Rotas do painel carregadas sob demanda (bundle inicial menor para a landing)
-const lazyNamed = <T extends Record<string, React.ComponentType>>(loader: () => Promise<T>, name: keyof T) =>
-  React.lazy(() => loader().then((m) => ({ default: m[name] })))
+const lazyNamed = <T extends Record<string, unknown>>(loader: () => Promise<T>, name: keyof T) =>
+  React.lazy(() => loader().then((m) => ({ default: m[name] as React.ComponentType })))
 
 const OnboardingPage = lazyNamed(() => import('@/features/onboarding/OnboardingPage'), 'OnboardingPage')
 const DashboardPage = lazyNamed(() => import('@/features/dashboard/DashboardPage'), 'DashboardPage')
@@ -30,6 +30,13 @@ const ReportsPage = lazyNamed(() => import('@/features/reports/ReportsPage'), 'R
 const SettingsPage = lazyNamed(() => import('@/features/settings/SettingsPage'), 'SettingsPage')
 const PlanPage = lazyNamed(() => import('@/features/billing/PlanPage'), 'PlanPage')
 const HelpPage = lazyNamed(() => import('@/pages/HelpPage'), 'HelpPage')
+const AgendaPage = lazyNamed(() => import('@/features/agenda/AgendaPage'), 'AgendaPage')
+const ServicesPage = lazyNamed(() => import('@/features/services/ServicesPage'), 'ServicesPage')
+const StockPage = lazyNamed(() => import('@/features/inventory/StockPage'), 'StockPage')
+const PosPage = lazyNamed(() => import('@/features/pos/PosPage'), 'PosPage')
+const FinancePage = lazyNamed(() => import('@/features/finance/FinancePage'), 'FinancePage')
+const RemindersPage = lazyNamed(() => import('@/features/reminders/RemindersPage'), 'RemindersPage')
+const PublicStorePage = lazyNamed(() => import('@/pages/PublicStorePage'), 'PublicStorePage')
 
 function RequireAuth() {
   const { session, loading } = useAuth()
@@ -120,6 +127,7 @@ export function App() {
             <Route path="/" element={surface === 'app' ? <Navigate to="/app" replace /> : <LandingPage />} />
             <Route path="/privacidade" element={<PrivacyPage />} />
             <Route path="/termos" element={<TermsPage />} />
+            {isSupabaseConfigured && <Route path="/loja/:slug" element={<PublicStorePage />} />}
             {surface === 'site' ? (
               <Route path="*" element={<ExternalRedirect />} />
             ) : isSupabaseConfigured ? (
@@ -139,6 +147,12 @@ export function App() {
                       <Route path="compras" element={<PurchasesPage />} />
                       <Route path="recompras" element={<ReplenishmentPage />} />
                       <Route path="recuperacao" element={<RecoveryPage />} />
+                      <Route path="agenda" element={<AgendaPage />} />
+                      <Route path="servicos" element={<ServicesPage />} />
+                      <Route path="estoque" element={<StockPage />} />
+                      <Route path="caixa" element={<PosPage />} />
+                      <Route path="financeiro" element={<FinancePage />} />
+                      <Route path="lembretes" element={<RemindersPage />} />
                       <Route path="relatorios" element={<ReportsPage />} />
                       <Route path="configuracoes" element={<SettingsPage />} />
                       <Route path="configuracoes/:tab" element={<SettingsPage />} />
