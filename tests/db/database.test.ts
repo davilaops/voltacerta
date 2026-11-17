@@ -65,7 +65,7 @@ describe('cadastro e onboarding', () => {
     expect(ctx.get_org_context.status).toBe('trialing')
     expect(ctx.get_org_context.can_write).toBe(true)
     const templates = await A.user.query('select * from public.message_templates where organization_id = $1', [A.orgId])
-    expect(templates).toHaveLength(3)
+    expect(templates).toHaveLength(8)
   })
 
   it('anônimo não acessa nada', async () => {

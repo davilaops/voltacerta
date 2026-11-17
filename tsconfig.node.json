@@ -14,5 +14,5 @@
     "jsx": "react-jsx",
     "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["vite.config.ts", "tests", "supabase/functions/_shared/billing.ts", "supabase/functions/_shared/asaas.ts"]
+  "include": ["vite.config.ts", "tests", "supabase/functions/_shared/billing.ts", "supabase/functions/_shared/asaas.ts", "supabase/functions/_shared/whatsapp.ts", "supabase/functions/_shared/fiscal.ts"]
 }

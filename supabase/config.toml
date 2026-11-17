@@ -26,3 +26,12 @@ verify_jwt = true
 
 [functions.asaas-webhook]
 verify_jwt = false
+
+[functions.public-store]
+verify_jwt = false
+
+[functions.whatsapp-dispatch]
+verify_jwt = false
+
+[functions.fiscal-invoice]
+verify_jwt = true
