@@ -9,6 +9,7 @@ import { Field, Input, Select } from '@/components/ui/input'
 import { FullscreenLoader, useMemberships } from '@/features/org/OrgProvider'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { rpc, supabase } from '@/lib/supabase'
+import { trackEvent } from '@/lib/tracking'
 import { errorMessage } from '@/lib/errors'
 import { normalizePhone } from '@/lib/phone'
 import { BR_STATES, BUSINESS_TYPE, CATEGORY } from '@/domain/labels'
@@ -82,6 +83,7 @@ export function OnboardingPage() {
       p_additional: isNew,
     })
     localStorage.setItem('vc.currentOrg', id)
+    if (!isNew) trackEvent('StartTrial', { value: 0, currency: 'BRL' }, { force: true })
     setOrgId(id)
     await qc.invalidateQueries({ queryKey: ['memberships'] })
     return id

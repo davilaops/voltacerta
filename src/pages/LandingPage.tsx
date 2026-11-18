@@ -8,15 +8,19 @@ import {
   Check,
   ChevronDown,
   ClipboardList,
+  Globe,
   Menu as MenuIcon,
   MessageCircle,
   PackageSearch,
   RefreshCcw,
+  Receipt,
+  Scissors,
   ShieldCheck,
   Smartphone,
   TrendingDown,
   UserRoundX,
   Users,
+  Wallet,
   X,
 } from 'lucide-react'
 import { Logo } from '@/components/brand/Logo'
@@ -308,6 +312,10 @@ export function LandingPage() {
               { icon: MessageCircle, title: 'WhatsApp com um clique', text: 'Modelos de mensagem personalizáveis com nome do cliente, produto e pet.' },
               { icon: Users, title: 'CRM de clientes e pets', text: 'Vários pets por cliente, histórico completo e busca por nome ou telefone.' },
               { icon: BarChart3, title: 'Relatórios com exportação', text: 'Vendas, produtos mais vendidos, clientes inativos e taxa de recuperação em CSV.' },
+              { icon: Scissors, title: 'Agenda de banho e tosa', text: 'Atendimentos por profissional, sem horário duplicado, com pacotes e lembrete na véspera.' },
+              { icon: Receipt, title: 'Caixa e estoque', text: 'Venda no balcão com Pix, cartão, dinheiro e fiado. O estoque baixa sozinho e sugere o que comprar.' },
+              { icon: Wallet, title: 'Financeiro', text: 'Faturamento, contas a pagar e a receber, fluxo de caixa e lucro estimado.' },
+              { icon: Globe, title: 'Loja online', text: 'Catálogo e agendamento pela internet com o link do seu pet shop.' },
               { icon: ShieldCheck, title: 'Dados protegidos e LGPD', text: 'Isolamento por estabelecimento, consentimento e bloqueio de contato registrados.' },
               { icon: Smartphone, title: 'Funciona no celular', text: 'Acompanhe e contate clientes de qualquer lugar, direto do balcão.' },
             ].map(({ icon: Icon, title, text }) => (
@@ -330,9 +338,9 @@ export function LandingPage() {
           <div className="mx-auto max-w-3xl border-t border-border">
             {[
               { q: 'Preciso instalar alguma coisa?', a: 'Não. O VoltaCerta funciona no navegador do computador e do celular.' },
-              { q: 'As mensagens são enviadas automaticamente?', a: 'Não. Você revisa e envia cada mensagem pelo seu WhatsApp. Isso mantém o contato pessoal e evita disparos indesejados.' },
+              { q: 'As mensagens são enviadas automaticamente?', a: 'Por padrão, você revisa e envia cada mensagem pelo seu WhatsApp com um clique. Se quiser, dá para ativar o envio automático pela API oficial do WhatsApp Business (Meta), com a sua própria conta.' },
               { q: 'Como o sistema sabe quando o produto vai acabar?', a: 'Você informa a duração média de cada produto. A previsão considera a quantidade comprada e, com o tempo, o intervalo real entre as compras de cada cliente.' },
-              { q: 'O VoltaCerta substitui meu sistema de vendas?', a: 'Não é um ERP. Ele é focado em recompra e recuperação de clientes, e pode ser usado junto com o sistema que você já tem.' },
+              { q: 'O VoltaCerta substitui meu sistema de vendas?', a: 'Pode substituir. Ele tem agenda de banho e tosa, caixa, estoque, financeiro e emissão de nota fiscal (com a sua conta na Focus NFe). Se preferir, use só a parte de recompra junto com o sistema que você já tem.' },
               { q: 'Meus dados ficam seguros?', a: 'Cada estabelecimento tem seus dados isolados com regras de acesso no próprio banco de dados. Você pode exportar ou excluir dados de clientes quando precisar.' },
               { q: 'Posso cancelar quando quiser?', a: 'Sim. Não há fidelidade nem taxa de cancelamento.' },
             ].map((f) => <Faq key={f.q} {...f} />)}

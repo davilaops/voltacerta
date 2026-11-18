@@ -13,6 +13,7 @@ import { isSupabaseConfigured } from '@/lib/supabase'
 import { APP_URL, surface } from '@/lib/hosts'
 import { BlockedScreen, useAccountStatus } from '@/features/auth/accountStatus'
 import { isChunkLoadError, reloadForNewVersion } from '@/lib/chunkReload'
+import { MarketingTracker } from '@/components/shared/MarketingTracker'
 
 // Rotas do painel carregadas sob demanda (bundle inicial menor para a landing)
 const lazyNamed = <T extends Record<string, unknown>>(loader: () => Promise<T>, name: keyof T) =>
@@ -122,6 +123,7 @@ export function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
+        <MarketingTracker />
         <React.Suspense fallback={<FullscreenLoader />}>
           <Routes>
             <Route path="/" element={surface === 'app' ? <Navigate to="/app" replace /> : <LandingPage />} />

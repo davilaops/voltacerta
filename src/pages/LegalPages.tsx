@@ -20,7 +20,7 @@ function LegalLayout({ title, children }: { title: string; children: React.React
   )
 }
 
-const LAST_UPDATE = '13 de novembro de 2026'
+const LAST_UPDATE = '18 de novembro de 2026'
 
 function ContactLink() {
   return <a href={SUPPORT_MAILTO}>{SUPPORT_EMAIL}</a>
@@ -36,10 +36,14 @@ export function PrivacyPage() {
       <p>As cobranças são processadas pelo Asaas (Pix, cartão ou boleto). Os dados de cartão são digitados diretamente no ambiente do Asaas e não passam nem ficam armazenados no VoltaCerta. Guardamos apenas o histórico da assinatura e dos pagamentos (plano, valor, data e situação).</p>
       <h2>Fornecedores</h2>
       <p>Para funcionar, o serviço utiliza fornecedores de infraestrutura: Supabase (banco de dados e autenticação), Vercel (hospedagem do site) e Asaas (pagamentos). Eles tratam os dados apenas para prestar esses serviços. Não vendemos dados pessoais.</p>
+      <p>Integrações opcionais, ativadas pelo próprio estabelecimento com contas dele: Meta (API oficial do WhatsApp Business, para envio automático de mensagens) e Focus NFe (emissão de nota fiscal). Nesses casos, os dados necessários para enviar a mensagem ou emitir a nota são repassados a esses serviços.</p>
+      <h2>Cookies e anúncios</h2>
+      <p>Nas páginas públicas do VoltaCerta (site, cadastro e login), usamos o Meta Pixel para medir o resultado dos nossos anúncios no Facebook e no Instagram, somente se você aceitar no aviso de cookies. Ele registra visitas e eventos como "cadastro concluído" e "assinatura paga", sem enviar nome, e-mail, telefone ou dados dos clientes do estabelecimento. O Pixel não é usado dentro do painel nem nas lojas online dos estabelecimentos. Para mudar sua escolha, limpe os dados do site no navegador e o aviso aparecerá de novo.</p>
+      <p>Também guardamos no seu navegador a origem da visita (por exemplo, qual anúncio trouxe você), que é registrada junto com o cadastro para sabermos quais campanhas funcionam.</p>
       <h2>Dados dos clientes do estabelecimento</h2>
       <p>O estabelecimento é o controlador dos dados de seus clientes (nome, telefone, e-mail opcional, pets e compras). O VoltaCerta atua como operador, tratando esses dados apenas para prever recompras e organizar contatos. Os dados de cada estabelecimento são isolados e nunca compartilhados com outros estabelecimentos.</p>
       <h2>Comunicação comercial</h2>
-      <p>O sistema permite registrar consentimento e oposição ao contato. Contatos com clientes que se opuseram são bloqueados. Não realizamos disparos automáticos de mensagens.</p>
+      <p>O sistema permite registrar consentimento e oposição ao contato. Contatos com clientes que se opuseram são bloqueados. Mensagens automáticas só são enviadas quando o estabelecimento ativa a integração com o WhatsApp Business, e as de relacionamento só vão para clientes com consentimento registrado.</p>
       <h2>Direitos dos titulares</h2>
       <p>É possível exportar e excluir os dados de um cliente a qualquer momento pelo painel. Proprietários podem solicitar a exclusão de todos os dados do estabelecimento em Configurações → Privacidade e dados.</p>
       <h2>Segurança</h2>

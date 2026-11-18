@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox, Field, Input } from '@/components/ui/input'
 import { appUrl, supabase } from '@/lib/supabase'
 import { errorMessage } from '@/lib/errors'
+import { getAttribution, trackEvent } from '@/lib/tracking'
 
 export function LoginPage() {
   const { session } = useAuth()
@@ -92,9 +93,10 @@ export function SignupPage() {
     const { data, error } = await supabase.auth.signUp({
       email: v.email,
       password: v.password,
-      options: { data: { full_name: v.fullName }, emailRedirectTo: `${appUrl}/onboarding` },
+      options: { data: { full_name: v.fullName, signup_source: getAttribution() }, emailRedirectTo: `${appUrl}/onboarding` },
     })
     if (error) return toast.error(errorMessage(error))
+    trackEvent('CompleteRegistration', { content_name: 'cadastro' })
     if (data.session) navigate('/onboarding', { replace: true })
     else setSentTo(v.email)
   })

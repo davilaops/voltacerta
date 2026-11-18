@@ -4,4 +4,4 @@ Disallow: /app
 Disallow: /onboarding
 Disallow: /redefinir-senha
 
-Sitemap: https://voltacerta.com.br/sitemap.xml
+Sitemap: https://voltacerta-brown.vercel.app/sitemap.xml

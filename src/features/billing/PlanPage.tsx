@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { trackEvent } from '@/lib/tracking'
 import { toast } from 'sonner'
 import { Check, Info, Loader2 } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
@@ -60,7 +61,20 @@ export function PlanPage() {
   }, [returned, confirmed, qc, org.id])
 
   React.useEffect(() => {
-    if (confirmed) toast.success('Pagamento confirmado. Sua assinatura está ativa!')
+    if (!confirmed) return
+    toast.success('Pagamento confirmado. Sua assinatura está ativa!')
+    // um evento por período pago (recarregar a página não conta outra venda)
+    const key = `vc.purchaseTracked.${org.id}.${ctx.current_period_end ?? ''}`
+    let seen = false
+    try {
+      seen = localStorage.getItem(key) === '1'
+      localStorage.setItem(key, '1')
+    } catch {
+      /* armazenamento bloqueado */
+    }
+    const price = plans.data?.find((p) => p.id === ctx.plan)?.price_cents
+    if (!seen) trackEvent('Purchase', { value: (price ?? 0) / 100, currency: 'BRL', content_name: ctx.plan }, { force: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- dispara uma vez por confirmação
   }, [confirmed])
 
   // CPF/CNPJ é exigido pelo gateway só na primeira assinatura (depois o cliente é reaproveitado).
