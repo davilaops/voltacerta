@@ -50,16 +50,29 @@ Cada cadastro também guarda de qual anúncio veio (`utm_*`), mesmo para quem re
 |---|---|
 | Objetivo | **Cadastros (Leads)**, local da conversão **Site**, evento **CompleteRegistration** |
 | Nome | `VC | Cadastro | Teste 1` |
-| Orçamento | **R$ 20 por dia** no conjunto de anúncios, sem data de término (pausar manualmente) |
+| Orçamento | **Orçamento total de R$ 70**, 5 dias (≈ R$ 14 por dia), com data de término: a Meta para sozinha |
 | Público | Brasil · 22 a 60 anos · Público Advantage+ ligado, com sugestões: *Pet shop*, *Banho e tosa*, *Medicina veterinária*, *Petz*, *Cobasi*, *Administradores de página de pequenas empresas* |
 | Posicionamentos | Advantage+ (automático) |
-| Anúncios | 3 anúncios, cada um com a arte de feed + a de story |
+| Anúncios | 2 anúncios (A e B), cada um com a arte de feed + a de story. O C fica de reserva |
 | Link | `https://voltacerta-brown.vercel.app/` |
 | Parâmetros de URL | `utm_source=facebook&utm_medium=paid&utm_campaign={{campaign.name}}&utm_content={{ad.name}}` |
 | Botão | "Cadastre-se" |
 
-**Por que assim:** com R$ 20 por dia, um único conjunto de anúncios concentra o aprendizado da Meta.
-Dividir em vários públicos espalharia o pouco orçamento e nenhum aprenderia.
+**Por que assim:** com R$ 70, um único conjunto de anúncios com só 2 anúncios concentra o aprendizado da Meta.
+Dividir em vários públicos ou anúncios espalharia o pouco orçamento e nenhum aprenderia.
+
+**O que este teste responde:** se o anúncio gera cliques e se a página leva a cadastros. Não responde se as
+pessoas pagam: isso só aparece depois dos 14 dias de teste grátis de quem se cadastrou (sem gastar mais).
+
+**Quando decidir:**
+
+| Momento | Se… | Então |
+|---|---|---|
+| Dia 2 (≈ R$ 28 gastos) | um anúncio tem bem menos cliques que o outro | pausar esse e deixar o orçamento no melhor |
+| Fim (R$ 70) | nenhum cadastro | o problema está no texto ou na página, não no orçamento: ajustar antes de gastar mais |
+| Fim (R$ 70) | 2 ou mais cadastros | a mensagem funciona: esperar os 14 dias para ver quem assina antes de investir mais |
+
+Em paralelo, e de graça: mandar mensagem para 10 a 20 pet shops no Instagram ou WhatsApp oferecendo o teste.
 
 **Se o Pixel ainda não tiver dados** e a Meta não entregar os anúncios nos primeiros 2 dias,
 troque a otimização para **Visualizações da página de destino** e volte para cadastros depois dos primeiros 20 cadastros.
