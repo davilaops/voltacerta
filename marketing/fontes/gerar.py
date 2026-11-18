@@ -168,8 +168,63 @@ jobs.append(page('post-3-estoque', 1080, 1350, f'''
 </div>
 '''))
 
+# 10-13) Feed 4:5 no visual do vídeo (telas tiradas do vídeo "VoltaCerta_v2_9x16_narrado")
+VIDEO_CSS = '''
+.shot{display:block;margin:0 auto;-webkit-mask-image:linear-gradient(#0000,#000 4%,#000 96%,#0000),linear-gradient(90deg,#0000,#000 3%,#000 97%,#0000);-webkit-mask-composite:source-in;mask-composite:intersect}
+.ilus{color:#64748b;font-size:20px;text-align:center;margin-top:10px}
+'''
+
+
+def barra():
+    return '''<div style="position:absolute;left:72px;right:72px;bottom:64px;display:flex;align-items:center;justify-content:space-between;background:rgba(9,13,22,.94);border:1.5px solid #263247;border-radius:26px;padding:26px 30px">
+  <div><div style="font-size:30px;font-weight:700">Teste grátis por 14 dias</div><div class="sub" style="font-size:24px;margin-top:6px">Sem cartão de crédito</div></div>
+  <div class="cta" style="font-size:30px;padding:22px 34px">Começar agora →</div>
+</div>'''
+
+
+jobs.append(page('video-1-mesa', 1080, 1350, f'''
+{logo_html()}
+<h1 style="font-size:78px;margin-top:52px">Cliente que não volta é <span class="g">dinheiro deixado na mesa.</span></h1>
+<p class="sub" style="font-size:34px;margin-top:26px;max-width:900px">O VoltaCerta mostra quem deixou de comprar e quanto isso custa no mês.</p>
+<img class="shot" src="{T}v-mesa.png" style="width:900px;margin-top:40px">
+<div class="ilus">Tela ilustrativa · dados fictícios</div>
+{barra()}
+''', extra_css=VIDEO_CSS))
+
+jobs.append(page('video-2-lista', 1080, 1350, f'''
+{logo_html()}
+<h1 style="font-size:78px;margin-top:52px">Todo dia, a lista de <span class="g">quem chamar hoje.</span></h1>
+<img class="shot" src="{T}v-contatar.png" style="width:620px;margin-top:34px">
+{barra()}
+''', extra_css=VIDEO_CSS))
+
+jobs.append(page('video-3-whatsapp', 1080, 1350, f'''
+{logo_html()}
+<h1 style="font-size:78px;margin-top:52px">A mensagem já vem pronta. <span class="g">Você só aperta enviar.</span></h1>
+<img class="shot" src="{T}v-chat.png" style="width:840px;margin-top:44px">
+{barra()}
+''', extra_css=VIDEO_CSS))
+
+jobs.append(page('video-4-teste', 1080, 1350, f'''
+{logo_html()}
+<h1 style="font-size:84px;margin-top:56px">Traga o cliente de volta <span class="g">no dia certo.</span></h1>
+<p class="sub" style="font-size:34px;margin-top:26px">O VoltaCerta avisa quando cada cliente vai precisar comprar de novo.</p>
+<div style="flex:1"></div>
+<img class="shot" src="{T}v-recuperada.png" style="width:900px">
+<div class="ilus">Tela ilustrativa · dados fictícios</div>
+<div style="flex:1"></div>
+<div style="text-align:center"><div style="font-size:110px;font-weight:800;letter-spacing:-.04em;line-height:1">14 dias <span class="g">grátis.</span></div>
+<div class="cta" style="font-size:38px;padding:28px 56px;margin-top:40px">Começar agora →</div>
+<div class="sub" style="font-size:26px;margin-top:22px">Sem cartão de crédito · cancele quando quiser</div></div>
+<div style="height:8px"></div>
+''', extra_css=VIDEO_CSS))
+
+# python gerar.py video-  -> gera só as artes cujo nome contém o texto
+only = sys.argv[1] if len(sys.argv) > 1 else ''
 for path, w, h in jobs:
     name = os.path.splitext(os.path.basename(path))[0]
+    if only and only not in name:
+        continue
     target = os.path.abspath(os.path.join(OUT, name + '.png'))
     if name == 'og-image':
         target = os.path.abspath(os.path.join(HERE, '..', '..', 'public', 'og-image.png'))

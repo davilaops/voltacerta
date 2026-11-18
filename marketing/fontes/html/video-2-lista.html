@@ -1,0 +1,42 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1350px;overflow:hidden}
+body{font-family:Inter,Arial,sans-serif;background:#090d16;color:#f8fafc;position:relative;-webkit-font-smoothing:antialiased}
+.glow{position:absolute;inset:0;background:radial-gradient(60% 45% at 50% 0%,rgba(34,197,139,.22),transparent 70%),radial-gradient(50% 40% at 100% 100%,rgba(34,197,139,.10),transparent 70%)}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(38,50,71,.35) 1px,transparent 1px),linear-gradient(90deg,rgba(38,50,71,.35) 1px,transparent 1px);background-size:64px 64px;-webkit-mask-image:radial-gradient(ellipse 80% 55% at 50% 0%,#000,transparent)}
+.wrap{position:relative;height:100%;display:flex;flex-direction:column;padding:72px}
+.logo{display:flex;align-items:center;gap:16px;font-weight:700;font-size:40px;letter-spacing:-.02em}
+.mark{width:60px;height:60px;border-radius:15px;background:#22c58b;color:#04130d;display:grid;place-items:center}
+.mark svg{width:70%;height:70%}
+h1{font-weight:800;letter-spacing:-.035em;line-height:1.04}
+.g{color:#22c58b}
+.sub{color:#a7b3c6;line-height:1.35}
+.pill{display:inline-flex;align-items:center;gap:12px;border:1.5px solid #263247;background:rgba(17,24,39,.8);border-radius:999px;padding:12px 24px;color:#cbd5e1;font-weight:500}
+.dot{width:12px;height:12px;border-radius:50%;background:#22c58b}
+.cta{display:inline-flex;align-items:center;justify-content:center;gap:14px;background:#22c58b;color:#04130d;font-weight:700;border-radius:18px;box-shadow:0 20px 50px -12px rgba(34,197,139,.55)}
+.phone{border-radius:64px;padding:14px;background:linear-gradient(160deg,#2a3650,#121a2b);box-shadow:0 40px 90px -20px rgba(0,0,0,.8),0 0 0 2px #1e2a40;overflow:hidden}
+.phone img{display:block;width:100%;border-radius:50px;object-fit:cover;object-position:top}
+.desk{border-radius:22px;border:2px solid #263247;background:#111827;box-shadow:0 40px 90px -20px rgba(0,0,0,.85);overflow:hidden}
+.desk .bar{height:38px;display:flex;align-items:center;gap:10px;padding:0 18px;background:#0d1320;border-bottom:1.5px solid #1e2a40}
+.desk .bar i{width:12px;height:12px;border-radius:50%;background:#263247}
+.desk img{display:block;width:100%;object-fit:cover;object-position:top left}
+.checks{display:flex;flex-direction:column}
+.checks div{display:flex;align-items:center;font-weight:500;color:#e2e8f0}
+.checks span{flex-shrink:0;border-radius:50%;background:rgba(34,197,139,.16);color:#22c58b;display:grid;place-items:center}
+.checks span svg{width:62%;height:62%}
+.note{color:#64748b;font-size:20px}
+.price b{color:#f8fafc}
+
+.shot{display:block;margin:0 auto;-webkit-mask-image:linear-gradient(#0000,#000 4%,#000 96%,#0000),linear-gradient(90deg,#0000,#000 3%,#000 97%,#0000);-webkit-mask-composite:source-in;mask-composite:intersect}
+.ilus{color:#64748b;font-size:20px;text-align:center;margin-top:10px}
+</style></head>
+<body><div class="glow"></div><div class="grid"></div><div class="wrap">
+<div class="logo"><span class="mark"><svg viewBox="0 0 32 32"><path d="M9 16.5l4.5 4.5L23 11.5" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>VoltaCerta</div>
+<h1 style="font-size:78px;margin-top:52px">Todo dia, a lista de <span class="g">quem chamar hoje.</span></h1>
+<img class="shot" src="../telas/v-contatar.png" style="width:620px;margin-top:34px">
+<div style="position:absolute;left:72px;right:72px;bottom:64px;display:flex;align-items:center;justify-content:space-between;background:rgba(9,13,22,.94);border:1.5px solid #263247;border-radius:26px;padding:26px 30px">
+  <div><div style="font-size:30px;font-weight:700">Teste grátis por 14 dias</div><div class="sub" style="font-size:24px;margin-top:6px">Sem cartão de crédito</div></div>
+  <div class="cta" style="font-size:30px;padding:22px 34px">Começar agora →</div>
+</div>
+</div></body></html>

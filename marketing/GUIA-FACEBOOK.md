@@ -53,7 +53,7 @@ Cada cadastro também guarda de qual anúncio veio (`utm_*`), mesmo para quem re
 | Orçamento | **Orçamento total de R$ 70**, 5 dias (≈ R$ 14 por dia), com data de término: a Meta para sozinha |
 | Público | Brasil · 22 a 60 anos · Público Advantage+ ligado, com sugestões: *Pet shop*, *Banho e tosa*, *Medicina veterinária*, *Petz*, *Cobasi*, *Administradores de página de pequenas empresas* |
 | Posicionamentos | Advantage+ (automático) |
-| Anúncios | 2 anúncios (A e B), cada um com a arte de feed + a de story. O C fica de reserva |
+| Anúncios | **1 \| Vídeo** (`video-anuncio.mp4`, 30 s narrado) e **2 \| Imagens** (carrossel com `video-1-mesa` → `video-2-lista` → `video-3-whatsapp` → `video-4-teste`), ambos com o texto do anúncio A. As artes antigas (A, B e C) ficam de reserva |
 | Link | `https://voltacerta-brown.vercel.app/` |
 | Parâmetros de URL | `utm_source=facebook&utm_medium=paid&utm_campaign={{campaign.name}}&utm_content={{ad.name}}` |
 | Botão | "Cadastre-se" |
@@ -77,7 +77,19 @@ Em paralelo, e de graça: mandar mensagem para 10 a 20 pet shops no Instagram ou
 **Se o Pixel ainda não tiver dados** e a Meta não entregar os anúncios nos primeiros 2 dias,
 troque a otimização para **Visualizações da página de destino** e volte para cadastros depois dos primeiros 20 cadastros.
 
-## 5. Os 3 anúncios
+## 5. Os anúncios
+
+### No ar no Teste 1: vídeo × carrossel (mesmo texto, para comparar só o formato)
+
+- **1 | Vídeo:** `marketing/artes/video-anuncio.mp4` (fora do git). O final do vídeo mostra `voltacerta.com.br`,
+  domínio que ainda não aponta para o site; o botão do anúncio leva ao endereço certo.
+- **2 | Imagens (carrossel):** títulos dos cartões: "Pare de perder a venda da recompra", "Saiba quem chamar
+  todo dia", "Mensagem pronta no WhatsApp", "Teste grátis por 14 dias".
+- Texto principal, título e descrição: os do anúncio A abaixo. Botão: "Registar" (aparece como "Cadastre-se" no Brasil).
+- Melhorias com IA da Meta (retoques, texto e imagens geradas) desligadas.
+- As 4 imagens são geradas por `python marketing/fontes/gerar.py video-`, com telas tiradas do vídeo.
+
+### Reserva
 
 ### Anúncio A — Recompra (`feed-1-recompra.png` + `story-1-recompra.png`)
 
