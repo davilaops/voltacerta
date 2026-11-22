@@ -10,7 +10,9 @@ import { CustomerPicker, type PickedCustomer } from '@/components/shared/Custome
 import { PaymentEditor, usePayments } from '@/components/shared/PaymentEditor'
 import { usePets } from '@/features/customers/api'
 import { useOrg } from '@/features/org/OrgProvider'
-import { PROFESSIONAL_ROLE, SERVICE_CATEGORY, WEEKDAYS_SHORT } from '@/domain/labels'
+import { WEEKDAYS_SHORT } from '@/domain/labels'
+import { mergeOptions, professionalRoleLabel, serviceCategoryLabel, suggestionsFor, toStoredProfessionalRole, toStoredServiceCategory } from '@/domain/business'
+import { CategoryInput } from '@/components/shared/CategoryInput'
 import { formatCurrency } from '@/lib/format'
 import { moneyInput, parseMoney } from '@/lib/money'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
@@ -42,7 +44,7 @@ export function ServicesPage() {
 
   return (
     <>
-      <PageHeader title="Serviços" description="Banho, tosa e outros serviços, a equipe que atende e os pacotes vendidos aos clientes." actions={action} />
+      <PageHeader title="Serviços" description="Os serviços que você oferece, a equipe que atende e os pacotes vendidos aos clientes." actions={action} />
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="servicos">Serviços</TabsTrigger>
@@ -92,7 +94,7 @@ function ServicesTab({ onEdit, onNew }: { onEdit: (s: Service) => void; onNew: (
   return (
     <Card>
       {q.isLoading ? <TableSkeleton /> : q.error ? <ErrorState error={q.error} onRetry={() => q.refetch()} /> : !q.data?.length ? (
-        <EmptyState icon={Scissors} title="Nenhum serviço cadastrado" description="Cadastre banho, tosa, hidratação e outros serviços com preço e duração para usar na agenda e no caixa."
+        <EmptyState icon={Scissors} title="Nenhum serviço cadastrado" description="Cadastre os serviços que você oferece, com preço e duração, para usar na agenda e no caixa."
           action={<Button onClick={onNew}><Plus /> Cadastrar serviço</Button>} />
       ) : (
         <DataTable
@@ -101,7 +103,7 @@ function ServicesTab({ onEdit, onNew }: { onEdit: (s: Service) => void; onNew: (
             <div key={s.id} className="flex items-start gap-3 px-4 py-3.5">
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium">{s.name}</div>
-                <div className="mt-0.5 text-xs text-muted">{SERVICE_CATEGORY[s.category]} · {formatCurrency(s.price)} · {s.duration_minutes} min</div>
+                <div className="mt-0.5 text-xs text-muted">{serviceCategoryLabel(s.category)} · {formatCurrency(s.price)} · {s.duration_minutes} min</div>
                 {!s.active && <Badge tone="muted" className="mt-2">Inativo</Badge>}
               </div>
               {actions(s)}
@@ -111,7 +113,7 @@ function ServicesTab({ onEdit, onNew }: { onEdit: (s: Service) => void; onNew: (
           {q.data.map((s) => (
             <tr key={s.id} className={cn(!s.active && 'opacity-60')}>
               <td><div className="font-medium">{s.name}</div>{!s.active && <span className="text-xs text-subtle">Inativo</span>}</td>
-              <td className="text-muted">{SERVICE_CATEGORY[s.category]}</td>
+              <td className="text-muted">{serviceCategoryLabel(s.category)}</td>
               <td className="tabular">{formatCurrency(s.price)}</td>
               <td className="tabular">{s.duration_minutes} min</td>
               <td className="tabular text-muted">{s.return_days ? `a cada ${s.return_days} dias` : '—'}</td>
@@ -127,15 +129,18 @@ function ServicesTab({ onEdit, onNew }: { onEdit: (s: Service) => void; onNew: (
 
 function ServiceDialog({ open, onOpenChange, item }: { open: boolean; onOpenChange: (o: boolean) => void; item: Service | null }) {
   const save = useSaveService()
-  const { canWrite } = useOrg()
-  const [f, setF] = React.useState({ name: '', category: 'banho' as ServiceCategory, price: '', duration: '60', returnDays: '', description: '', active: true, catalog: true, online: true })
+  const { org, canWrite } = useOrg()
+  const services = useServices({ includeInactive: true })
+  const sugg = suggestionsFor(org.business_type)
+  const options = mergeOptions(sugg.services, [...new Set((services.data ?? []).map((s) => s.category))].filter((c) => c !== 'outro'), serviceCategoryLabel)
+  const [f, setF] = React.useState({ name: '', category: '' as ServiceCategory, price: '', duration: '60', returnDays: '', description: '', active: true, catalog: true, online: true })
   const [submitted, setSubmitted] = React.useState(false)
   React.useEffect(() => {
     if (!open) return
     setSubmitted(false)
     setF(item
-      ? { name: item.name, category: item.category, price: moneyInput(item.price), duration: String(item.duration_minutes), returnDays: item.return_days ? String(item.return_days) : '', description: item.description ?? '', active: item.active, catalog: item.catalog_visible, online: item.bookable_online }
-      : { name: '', category: 'banho', price: '', duration: '60', returnDays: '', description: '', active: true, catalog: true, online: true })
+      ? { name: item.name, category: item.category === 'outro' ? '' : serviceCategoryLabel(item.category), price: moneyInput(item.price), duration: String(item.duration_minutes), returnDays: item.return_days ? String(item.return_days) : '', description: item.description ?? '', active: item.active, catalog: item.catalog_visible, online: item.bookable_online }
+      : { name: '', category: '', price: '', duration: '60', returnDays: '', description: '', active: true, catalog: true, online: true })
   }, [open, item])
   const price = parseMoney(f.price)
   const duration = Number(f.duration)
@@ -149,7 +154,7 @@ function ServiceDialog({ open, onOpenChange, item }: { open: boolean; onOpenChan
   const submit = () => {
     setSubmitted(true)
     if (Object.values(errors).some(Boolean)) return
-    save.mutate({ id: item?.id, values: { name: f.name.trim(), category: f.category, price, duration_minutes: duration, return_days: ret, description: f.description.trim() || null, active: f.active, catalog_visible: f.catalog, bookable_online: f.online } },
+    save.mutate({ id: item?.id, values: { name: f.name.trim(), category: toStoredServiceCategory(f.category), price, duration_minutes: duration, return_days: ret, description: f.description.trim() || null, active: f.active, catalog_visible: f.catalog, bookable_online: f.online } },
       { onSuccess: () => onOpenChange(false) })
   }
   const e: Partial<typeof errors> = submitted ? errors : {}
@@ -157,17 +162,15 @@ function ServiceDialog({ open, onOpenChange, item }: { open: boolean; onOpenChan
     <Dialog open={open} onOpenChange={onOpenChange} title={item ? 'Editar serviço' : 'Novo serviço'}
       footer={<><Button variant="secondary" onClick={() => onOpenChange(false)}>Cancelar</Button><Button onClick={submit} loading={save.isPending} disabled={!canWrite}>{item ? 'Salvar' : 'Cadastrar serviço'}</Button></>}>
       <div className="space-y-4">
-        <Field label="Nome" htmlFor="sname" error={e.name}><Input id="sname" autoFocus placeholder="Ex.: Banho porte pequeno" value={f.name} onChange={(ev) => setF({ ...f, name: ev.target.value })} /></Field>
+        <Field label="Nome" htmlFor="sname" error={e.name}><Input id="sname" autoFocus placeholder={sugg.serviceExample} value={f.name} onChange={(ev) => setF({ ...f, name: ev.target.value })} /></Field>
         <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="Categoria" htmlFor="scat">
-            <Select id="scat" value={f.category} onChange={(ev) => setF({ ...f, category: ev.target.value as ServiceCategory })}>
-              {Object.entries(SERVICE_CATEGORY).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-            </Select>
+          <Field label="Categoria" htmlFor="scat" optional>
+            <CategoryInput id="scat" options={options} value={f.category} onChange={(ev) => setF({ ...f, category: ev.target.value })} />
           </Field>
           <Field label="Preço (R$)" htmlFor="sprice" error={e.price}><Input id="sprice" inputMode="decimal" placeholder="0,00" value={f.price} onChange={(ev) => setF({ ...f, price: ev.target.value })} /></Field>
           <Field label="Duração (min)" htmlFor="sdur" error={e.duration}><Input id="sdur" inputMode="numeric" value={f.duration} onChange={(ev) => setF({ ...f, duration: ev.target.value })} /></Field>
         </div>
-        <Field label="Retorno sugerido (dias)" htmlFor="sret" optional error={e.returnDays} hint="Ex.: 15 para banho quinzenal. Gera o lembrete “hora de voltar”.">
+        <Field label="Retorno sugerido (dias)" htmlFor="sret" optional error={e.returnDays} hint="Ex.: 30 para um serviço mensal. Gera o lembrete “hora de voltar”.">
           <Input id="sret" inputMode="numeric" value={f.returnDays} onChange={(ev) => setF({ ...f, returnDays: ev.target.value })} />
         </Field>
         <Field label="Descrição" htmlFor="sdesc" optional><Textarea id="sdesc" rows={2} maxLength={1000} value={f.description} onChange={(ev) => setF({ ...f, description: ev.target.value })} /></Field>
@@ -190,7 +193,7 @@ function ProfessionalsTab({ onEdit, onNew }: { onEdit: (p: Professional) => void
   return (
     <Card>
       {q.isLoading ? <TableSkeleton /> : q.error ? <ErrorState error={q.error} onRetry={() => q.refetch()} /> : !q.data?.length ? (
-        <EmptyState icon={UserRound} title="Nenhum profissional cadastrado" description="Cadastre banhistas e tosadores com os dias e horários de trabalho. A agenda usa isso para evitar conflitos e mostrar horários livres."
+        <EmptyState icon={UserRound} title="Nenhum profissional cadastrado" description="Cadastre a equipe com os dias e horários de trabalho. A agenda usa isso para evitar conflitos e mostrar horários livres."
           action={isAdmin ? <Button onClick={onNew}><Plus /> Cadastrar profissional</Button> : undefined} />
       ) : (
         <div className="divide-y divide-border">
@@ -200,7 +203,7 @@ function ProfessionalsTab({ onEdit, onNew }: { onEdit: (p: Professional) => void
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium">{p.name} {!p.active && <span className="text-xs text-subtle">(inativo)</span>}</div>
                 <div className="text-xs text-muted">
-                  {PROFESSIONAL_ROLE[p.role]} · {p.work_days.slice().sort().map((d) => WEEKDAYS_SHORT[d]).join(', ')} · {p.work_start.slice(0, 5)}–{p.work_end.slice(0, 5)}
+                  {professionalRoleLabel(p.role)} · {p.work_days.slice().sort().map((d) => WEEKDAYS_SHORT[d]).join(', ')} · {p.work_start.slice(0, 5)}–{p.work_end.slice(0, 5)}
                 </div>
               </div>
               {isAdmin && (
@@ -227,14 +230,17 @@ const COLORS = ['#22c58b', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6'
 
 function ProfessionalDialog({ open, onOpenChange, item }: { open: boolean; onOpenChange: (o: boolean) => void; item: Professional | null }) {
   const save = useSaveProfessional()
-  const [f, setF] = React.useState({ name: '', role: 'banhista_tosador' as ProfessionalRole, phone: '', color: COLORS[0], days: [1, 2, 3, 4, 5, 6], start: '08:00', end: '18:00', active: true })
+  const { org } = useOrg()
+  const pros = useProfessionals({ includeInactive: true })
+  const roleOptions = mergeOptions(suggestionsFor(org.business_type).roles, [...new Set((pros.data ?? []).map((p) => p.role))].filter((r) => r !== 'outro'), professionalRoleLabel)
+  const [f, setF] = React.useState({ name: '', role: '' as ProfessionalRole, phone: '', color: COLORS[0], days: [1, 2, 3, 4, 5, 6], start: '08:00', end: '18:00', active: true })
   const [submitted, setSubmitted] = React.useState(false)
   React.useEffect(() => {
     if (!open) return
     setSubmitted(false)
     setF(item
-      ? { name: item.name, role: item.role, phone: item.phone ?? '', color: item.color, days: item.work_days, start: item.work_start.slice(0, 5), end: item.work_end.slice(0, 5), active: item.active }
-      : { name: '', role: 'banhista_tosador', phone: '', color: COLORS[Math.floor(Math.random() * COLORS.length)], days: [1, 2, 3, 4, 5, 6], start: '08:00', end: '18:00', active: true })
+      ? { name: item.name, role: item.role === 'outro' ? '' : professionalRoleLabel(item.role), phone: item.phone ?? '', color: item.color, days: item.work_days, start: item.work_start.slice(0, 5), end: item.work_end.slice(0, 5), active: item.active }
+      : { name: '', role: '', phone: '', color: COLORS[Math.floor(Math.random() * COLORS.length)], days: [1, 2, 3, 4, 5, 6], start: '08:00', end: '18:00', active: true })
   }, [open, item])
   const errors = {
     name: f.name.trim().length < 2 ? 'Informe o nome' : undefined,
@@ -244,7 +250,7 @@ function ProfessionalDialog({ open, onOpenChange, item }: { open: boolean; onOpe
   const submit = () => {
     setSubmitted(true)
     if (Object.values(errors).some(Boolean)) return
-    save.mutate({ id: item?.id, values: { name: f.name.trim(), role: f.role, phone: f.phone.trim() || null, color: f.color, work_days: f.days, work_start: f.start, work_end: f.end, active: f.active } },
+    save.mutate({ id: item?.id, values: { name: f.name.trim(), role: toStoredProfessionalRole(f.role), phone: f.phone.trim() || null, color: f.color, work_days: f.days, work_start: f.start, work_end: f.end, active: f.active } },
       { onSuccess: () => onOpenChange(false) })
   }
   const e: Partial<typeof errors> = submitted ? errors : {}
@@ -254,10 +260,8 @@ function ProfessionalDialog({ open, onOpenChange, item }: { open: boolean; onOpe
       <div className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Nome" htmlFor="pname" error={e.name}><Input id="pname" autoFocus value={f.name} onChange={(ev) => setF({ ...f, name: ev.target.value })} /></Field>
-          <Field label="Função" htmlFor="prole">
-            <Select id="prole" value={f.role} onChange={(ev) => setF({ ...f, role: ev.target.value as ProfessionalRole })}>
-              {Object.entries(PROFESSIONAL_ROLE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-            </Select>
+          <Field label="Função" htmlFor="prole" optional>
+            <CategoryInput id="prole" options={roleOptions} value={f.role} onChange={(ev) => setF({ ...f, role: ev.target.value })} />
           </Field>
         </div>
         <Field label="Dias de trabalho" error={e.days}>
@@ -300,7 +304,7 @@ function PackagesTab({ onEdit, onNew }: { onEdit: (p: ServicePackage) => void; o
   return (
     <Card>
       {q.isLoading ? <TableSkeleton /> : q.error ? <ErrorState error={q.error} onRetry={() => q.refetch()} /> : !q.data?.length ? (
-        <EmptyState icon={Gift} title="Nenhum pacote cadastrado" description="Crie pacotes como “4 banhos por mês” com preço fechado. O saldo de sessões de cada cliente é controlado automaticamente na agenda."
+        <EmptyState icon={Gift} title="Nenhum pacote cadastrado" description="Crie pacotes como “4 sessões por mês” com preço fechado. O saldo de sessões de cada cliente é controlado automaticamente na agenda."
           action={isAdmin ? <Button onClick={onNew}><Plus /> Cadastrar pacote</Button> : undefined} />
       ) : (
         <DataTable head={<><th>Pacote</th><th>Serviço</th><th>Sessões</th><th>Preço</th><th>Por sessão</th><th>Validade</th><th className="w-12" /></>}>
@@ -366,7 +370,7 @@ function PackageDialog({ open, onOpenChange, item }: { open: boolean; onOpenChan
     <Dialog open={open} onOpenChange={onOpenChange} title={item ? 'Editar pacote' : 'Novo pacote'}
       footer={<><Button variant="secondary" onClick={() => onOpenChange(false)}>Cancelar</Button><Button onClick={submit} loading={save.isPending}>{item ? 'Salvar' : 'Cadastrar pacote'}</Button></>}>
       <div className="space-y-4">
-        <Field label="Nome do pacote" htmlFor="kname" error={e.name}><Input id="kname" autoFocus placeholder="Ex.: Plano mensal — 4 banhos" value={f.name} onChange={(ev) => setF({ ...f, name: ev.target.value })} /></Field>
+        <Field label="Nome do pacote" htmlFor="kname" error={e.name}><Input id="kname" autoFocus placeholder="Ex.: Plano mensal — 4 sessões" value={f.name} onChange={(ev) => setF({ ...f, name: ev.target.value })} /></Field>
         <Field label="Serviço incluído" htmlFor="ksvc" error={e.service}>
           <Select id="ksvc" value={f.service_id} onChange={(ev) => setF({ ...f, service_id: ev.target.value })}>
             <option value="">Selecione</option>

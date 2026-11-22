@@ -12,7 +12,7 @@ import { ContactDialog, type ContactTarget } from '@/components/shared/ContactDi
 import { TAB_STAGES, usePredictions, useSetPredictionStatus, type PredictionFilters, type StageTab } from './api'
 import { useProducts } from '@/features/products/api'
 import { useCustomerSearch } from '@/features/customers/api'
-import { CATEGORY } from '@/domain/labels'
+import { productCategoryLabel } from '@/domain/business'
 import { formatCurrency, formatDate, formatNumber, formatRelativeDays } from '@/lib/format'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
 import type { PredictionView, ProductCategory } from '@/types/models'
@@ -104,7 +104,7 @@ export function ReplenishmentPage() {
           </Select>
           <Select aria-label="Categoria" value={filters.category ?? ''} onChange={(e) => setFilters((f) => ({ ...f, category: e.target.value as ProductCategory | '' }))}>
             <option value="">Todas as categorias</option>
-            {Object.entries(CATEGORY).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            {[...new Set((products.data ?? []).map((p) => p.category))].map((c) => <option key={c} value={c}>{productCategoryLabel(c)}</option>)}
           </Select>
           <div className="relative">
             <Input list="customer-options" placeholder="Cliente" aria-label="Cliente" value={customerSearch} onChange={(e) => {
@@ -177,7 +177,7 @@ export function ReplenishmentPage() {
                 </td>
                 <td>
                   <div>{p.product_name}</div>
-                  <div className="text-xs text-muted">{CATEGORY[p.product_category]}</div>
+                  <div className="text-xs text-muted">{productCategoryLabel(p.product_category)}</div>
                 </td>
                 <td className="tabular text-muted">{formatDate(p.last_purchase_date)}</td>
                 <td>

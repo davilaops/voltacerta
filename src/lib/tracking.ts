@@ -2,7 +2,7 @@
  * Medição de anúncios (Meta Pixel) e origem do cadastro (UTM).
  *
  * - O Pixel só carrega com VITE_META_PIXEL_ID definido E consentimento do visitante (LGPD).
- * - Nunca roda no painel, no admin nem na loja online dos pet shops (/loja), cujos
+ * - Nunca roda no painel, no admin nem na loja online dos estabelecimentos (/loja), cujos
  *   visitantes são clientes dos estabelecimentos, não nossos.
  * - Nenhum dado pessoal (nome, e-mail, telefone) é enviado ao Pixel.
  */

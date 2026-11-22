@@ -8,10 +8,11 @@ import { DataTable, EmptyState, ErrorState } from '@/components/ui/states'
 import { ACTION_LABEL, PAYMENT_STATUS, useAdminAction, useAdminOrganization } from '../api'
 import { CancelSubscriptionDialog, DeleteOrgDialog, OrgStatusBadge, ReasonDialog, type OrgRef } from '../components'
 import { formatCents, usePlans } from '@/features/billing/plans'
-import { BUSINESS_TYPE, PLAN_NAME, ROLE } from '@/domain/labels'
+import { PLAN_NAME, ROLE } from '@/domain/labels'
+import { businessTypeLabel } from '@/domain/business'
 import { formatDate, formatDateTime, formatNumber, formatPhone } from '@/lib/format'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
-import type { BusinessType, PlanTier } from '@/types/models'
+import type { PlanTier } from '@/types/models'
 
 type Action = 'suspend' | 'reactivate' | 'trial' | 'plan' | null
 
@@ -51,7 +52,7 @@ export function AdminOrganizationDetail() {
             {!o.onboarding_completed && <Badge tone="muted">Onboarding pendente</Badge>}
           </div>
           <p className="mt-1.5 text-[13px] text-muted">
-            {[o.city, o.state].filter(Boolean).join(' · ') || 'Sem cidade'} · {o.business_type ? BUSINESS_TYPE[o.business_type as BusinessType] : 'Tipo não informado'} · cadastrado em {formatDate(o.created_at)}
+            {[o.city, o.state].filter(Boolean).join(' · ') || 'Sem cidade'} · {businessTypeLabel(o.business_type) ?? 'Ramo não informado'} · cadastrado em {formatDate(o.created_at)}
           </p>
           {suspended && <p className="mt-2 text-[13px] text-[#ff8a8a]">Suspenso em {formatDateTime(o.suspended_at)} — {o.suspended_reason}</p>}
         </div>

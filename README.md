@@ -1,6 +1,6 @@
 # VoltaCerta
 
-Plataforma SaaS de **recompra inteligente para pet shops**. Identifica quando cada cliente vai precisar repor ração, areia, medicamentos e outros produtos, organiza o contato pelo WhatsApp e mede a receita efetivamente recuperada.
+Plataforma SaaS de **gestão e recompra inteligente para qualquer tipo de estabelecimento** (loja, mercado, salão, oficina, clínica, pet shop…). Identifica quando cada cliente vai precisar repor um produto ou voltar para um serviço, organiza o contato pelo WhatsApp e mede a receita efetivamente recuperada. O ramo escolhido no cadastro só muda as sugestões de categorias e exemplos; categorias de produto e serviço e funções da equipe são texto livre (migration 0018).
 
 > Stack: React 19 + TypeScript + Vite + Tailwind CSS v4 + componentes no padrão shadcn/ui (Radix) + TanStack Query + React Hook Form + Zod + Recharts · Supabase (PostgreSQL, Auth, Storage, Edge Functions, RLS).
 

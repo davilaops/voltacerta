@@ -131,7 +131,7 @@ function FiscalCard({ s, onSaved }: { s: Settings; onSaved: () => Promise<void> 
     <Card>
       <CardHeader
         title={<span className="flex items-center gap-2"><FileText className="size-4 text-info" /> Nota fiscal (NFC-e e NFS-e)</span>}
-        description="Emissão pela Focus NFe: NFC-e para venda de produtos e NFS-e para banho, tosa e outros serviços. Exige CNPJ, certificado digital A1 e cadastro na Focus NFe."
+        description="Emissão pela Focus NFe: NFC-e para venda de produtos e NFS-e para serviços. Exige CNPJ, certificado digital A1 e cadastro na Focus NFe."
         action={s.fiscal_enabled ? <Badge tone="brand" dot>{s.fiscal_environment === 'producao' ? 'Produção' : 'Homologação (teste)'}</Badge> : <Badge tone="muted">Desligado</Badge>}
       />
       <CardBody className="space-y-4">
@@ -158,7 +158,7 @@ function FiscalCard({ s, onSaved }: { s: Settings; onSaved: () => Promise<void> 
             <Field label="Inscrição municipal" htmlFor="fi-im" optional hint="Obrigatória para NFS-e"><Input id="fi-im" value={f.im} onChange={(e) => setF({ ...f, im: e.target.value })} /></Field>
             <Field label="Código do município (IBGE)" htmlFor="fi-city" optional hint="7 dígitos. Ex.: São Paulo 3550308"><Input id="fi-city" inputMode="numeric" maxLength={7} value={f.city} onChange={(e) => setF({ ...f, city: e.target.value.replace(/\D/g, '') })} /></Field>
             <Field label="Situação tributária ICMS (CSOSN/CST)" htmlFor="fi-csosn" hint="Simples Nacional sem crédito: 102"><Input id="fi-csosn" inputMode="numeric" value={f.csosn} onChange={(e) => setF({ ...f, csosn: e.target.value.replace(/\D/g, '') })} /></Field>
-            <Field label="Item da lista de serviço (LC 116)" htmlFor="fi-item" hint="Banho e tosa: 05.08"><Input id="fi-item" value={f.item} onChange={(e) => setF({ ...f, item: e.target.value })} /></Field>
+            <Field label="Item da lista de serviço (LC 116)" htmlFor="fi-item" hint="Consulte seu contador (ex.: 05.08)"><Input id="fi-item" value={f.item} onChange={(e) => setF({ ...f, item: e.target.value })} /></Field>
             <Field label="Código tributário do município" htmlFor="fi-tax" optional><Input id="fi-tax" value={f.taxCode} onChange={(e) => setF({ ...f, taxCode: e.target.value })} /></Field>
             <Field label="Alíquota do ISS (%)" htmlFor="fi-iss" optional><Input id="fi-iss" inputMode="decimal" value={f.iss} onChange={(e) => setF({ ...f, iss: e.target.value })} /></Field>
           </div>

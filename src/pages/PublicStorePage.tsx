@@ -4,7 +4,8 @@ import { useQuery } from '@tanstack/react-query'
 import { CalendarCheck, CheckCircle2, Clock, Loader2, MapPin, MessageCircle, Package, Scissors, Store } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Field, Input, Select, Textarea } from '@/components/ui/input'
-import { CATEGORY, SERVICE_CATEGORY, UNIT, WEEKDAYS, WEEKDAYS_SHORT } from '@/domain/labels'
+import { UNIT, WEEKDAYS, WEEKDAYS_SHORT } from '@/domain/labels'
+import { productCategoryLabel, serviceCategoryLabel } from '@/domain/business'
 import { addDaysISO } from '@/lib/dates'
 import { formatCurrency, formatDate, formatNumber } from '@/lib/format'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
@@ -118,7 +119,7 @@ function Storefront({ slug, s }: { slug: string; s: StoreData }) {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="font-medium">{x.name}</div>
-                    <div className="text-xs text-subtle">{SERVICE_CATEGORY[x.category]} · {x.duration_minutes} min</div>
+                    <div className="text-xs text-subtle">{serviceCategoryLabel(x.category)} · {x.duration_minutes} min</div>
                   </div>
                   {x.price != null && <div className="font-semibold tabular text-brand">{formatCurrency(x.price)}</div>}
                 </div>
@@ -154,7 +155,7 @@ function Catalog({ s }: { s: StoreData }) {
       {cats.length > 1 && (
         <div className="mb-4 flex flex-wrap gap-1.5">
           <Chip active={!cat} onClick={() => setCat('')}>Todos</Chip>
-          {cats.map((c) => <Chip key={c} active={cat === c} onClick={() => setCat(c)}>{CATEGORY[c]}</Chip>)}
+          {cats.map((c) => <Chip key={c} active={cat === c} onClick={() => setCat(c)}>{productCategoryLabel(c)}</Chip>)}
         </div>
       )}
       <div className="grid gap-3 sm:grid-cols-2">

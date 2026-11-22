@@ -9,7 +9,8 @@ import { DataTable, EmptyState, ErrorState, PageHeader, TableSkeleton } from '@/
 import { ProductDialog } from '@/components/shared/ProductDialog'
 import { useDeleteProduct, useProducts, useSaveProduct } from './api'
 import { useOrg } from '@/features/org/OrgProvider'
-import { CATEGORY, UNIT } from '@/domain/labels'
+import { UNIT } from '@/domain/labels'
+import { productCategoryLabel } from '@/domain/business'
 import { formatCurrency, formatNumber } from '@/lib/format'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
 import type { Product, ProductCategory } from '@/types/models'
@@ -25,6 +26,8 @@ export function ProductsPage() {
   const [search, setSearch] = React.useState('')
   const [category, setCategory] = React.useState<ProductCategory | ''>('')
   const [status, setStatus] = React.useState<'active' | 'inactive' | 'all'>('active')
+
+  const categories = [...new Set((q.data ?? []).map((p) => p.category))].sort((a, b) => productCategoryLabel(a).localeCompare(productCategoryLabel(b), 'pt-BR'))
 
   const rows = (q.data ?? []).filter((p) => {
     if (status === 'active' && !p.active) return false
@@ -89,7 +92,7 @@ export function ProductsPage() {
           <div className="grid grid-cols-2 gap-3 md:w-96">
             <Select value={category} onChange={(e) => setCategory(e.target.value as ProductCategory | '')} aria-label="Categoria">
               <option value="">Todas as categorias</option>
-              {Object.entries(CATEGORY).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              {categories.map((c) => <option key={c} value={c}>{productCategoryLabel(c)}</option>)}
             </Select>
             <Select value={status} onChange={(e) => setStatus(e.target.value as typeof status)} aria-label="Status">
               <option value="active">Ativos</option>
@@ -106,7 +109,7 @@ export function ProductsPage() {
           <EmptyState
             icon={Package}
             title="Nenhum produto cadastrado"
-            description="Cadastre rações, areia, medicamentos e outros itens com a duração média de cada um para prever recompras."
+            description="Cadastre os itens que você vende, com a duração média de cada um para prever recompras."
             action={<Button onClick={() => setDialog({ open: true, product: null })}><Plus /> Cadastrar produto</Button>}
           />
         ) : !rows.length ? (
@@ -118,7 +121,7 @@ export function ProductsPage() {
               <div key={p.id} className="flex items-start gap-3 px-4 py-3.5">
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium">{p.name}</div>
-                  <div className="mt-0.5 text-xs text-muted">{CATEGORY[p.category]} · {formatCurrency(p.price)} · {duration(p)}</div>
+                  <div className="mt-0.5 text-xs text-muted">{productCategoryLabel(p.category)} · {formatCurrency(p.price)} · {duration(p)}</div>
                   {!p.active && <Badge tone="muted" className="mt-2">Inativo</Badge>}
                 </div>
                 {actions(p)}
@@ -131,7 +134,7 @@ export function ProductsPage() {
                   <div className="font-medium">{p.name}</div>
                   <div className="text-xs text-muted">{[p.brand, p.sku].filter(Boolean).join(' · ') || '—'}</div>
                 </td>
-                <td className="text-muted">{CATEGORY[p.category]}</td>
+                <td className="text-muted">{productCategoryLabel(p.category)}</td>
                 <td className="tabular">{formatCurrency(p.price)}</td>
                 <td className="tabular text-muted">{p.size_value ? `${formatNumber(p.size_value)} ${UNIT[p.unit]}` : '—'}</td>
                 <td className="tabular">

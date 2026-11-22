@@ -70,7 +70,7 @@ export function AgendaPage() {
     <>
       <PageHeader
         title="Agenda"
-        description="Banho, tosa e demais atendimentos. Conclua o atendimento para registrar o pagamento e usar sessões de pacotes."
+        description="Atendimentos marcados com cada profissional. Conclua o atendimento para registrar o pagamento e usar sessões de pacotes."
         actions={canWrite && <Button onClick={() => openNew({ date })} disabled={!services.data?.length}><Plus /> Novo agendamento</Button>}
       />
 
@@ -111,7 +111,7 @@ export function AgendaPage() {
         </div>
 
         {q.isLoading ? <TableSkeleton /> : q.error ? <ErrorState error={q.error} onRetry={() => q.refetch()} /> : !services.data?.length ? (
-          <EmptyState icon={CalendarDays} title="Cadastre seus serviços primeiro" description="A agenda usa os serviços (banho, tosa…) com preço e duração."
+          <EmptyState icon={CalendarDays} title="Cadastre seus serviços primeiro" description="A agenda usa os serviços cadastrados, com preço e duração."
             action={<Button asChild><Link to="/app/servicos">Cadastrar serviços</Link></Button>} />
         ) : view === 'dia' ? (
           <div className="p-4">

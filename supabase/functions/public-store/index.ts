@@ -1,4 +1,4 @@
-// Edge Function: página pública do pet shop (catálogo e agendamento online).
+// Edge Function: página pública do estabelecimento (catálogo e agendamento online).
 // Sem login. As funções do banco usadas aqui só são executáveis pelo service role,
 // então TODA entrada pública passa por esta função, que valida o formato e aplica
 // um limite de requisições por IP (os limites por telefone/loja ficam no banco).

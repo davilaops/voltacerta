@@ -12,6 +12,7 @@ import { useOrg } from '@/features/org/OrgProvider'
 import { rpc, supabase, unwrap } from '@/lib/supabase'
 import { errorMessage } from '@/lib/errors'
 import { renderTemplate, TEMPLATE_VARIABLES } from '@/lib/whatsapp'
+import { suggestionsFor } from '@/domain/business'
 import type { MessageTemplate } from '@/types/models'
 import { ReadOnlyNotice } from './shared'
 
@@ -157,7 +158,7 @@ export function TemplateSettings() {
           <div>
             <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-subtle">Pré-visualização</p>
             <div className="rounded-lg rounded-tl-none bg-[#0b3d2e] px-3 py-2 text-[13px] text-[#e7fbef]">
-              {renderTemplate(body, { nome: 'Maria Souza', produto: 'Ração Premium 15kg', pet: 'Thor', loja: org.name })}
+              {renderTemplate(body, { nome: 'Maria Souza', produto: suggestionsFor(org.business_type).productExample.replace(/^Ex\.:\s*/, ''), pet: 'Thor', loja: org.name })}
             </div>
           </div>
         </div>

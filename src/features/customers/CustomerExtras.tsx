@@ -6,9 +6,9 @@ import { useCustomerAppointments, isoToLocal } from '@/features/agenda/api'
 import { useCustomerInsights } from '@/features/reminders/api'
 import { useCancelCustomerPackage } from '@/features/services/api'
 import { useOrg } from '@/features/org/OrgProvider'
-import { APPOINTMENT_STATUS, CATEGORY } from '@/domain/labels'
+import { APPOINTMENT_STATUS } from '@/domain/labels'
+import { productCategoryLabel } from '@/domain/business'
 import { formatCurrency, formatDate, formatNumber } from '@/lib/format'
-import type { ProductCategory } from '@/types/models'
 
 const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
 
@@ -53,7 +53,7 @@ export function InsightsCard({ customerId }: { customerId: string }) {
                 <div className="text-xs text-subtle">Onde gasta</div>
                 {cats.map(([k, v]) => (
                   <div key={k}>
-                    <div className="flex justify-between text-[13px]"><span className="text-muted">{k === 'servicos' ? 'Serviços' : CATEGORY[k as ProductCategory] ?? k}</span><span className="tabular">{formatCurrency(v)}</span></div>
+                    <div className="flex justify-between text-[13px]"><span className="text-muted">{k === 'servicos' ? 'Serviços' : productCategoryLabel(k)}</span><span className="tabular">{formatCurrency(v)}</span></div>
                     <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-surface-3"><div className="h-full rounded-full bg-brand" style={{ width: `${catTotal ? (Number(v) / catTotal) * 100 : 0}%` }} /></div>
                   </div>
                 ))}

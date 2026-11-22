@@ -85,7 +85,7 @@ export function StoreSettings() {
             <Field label="Endereço" htmlFor="slug" hint={slugOk ? `${appBaseUrl}/loja/${f.slug}` : 'Use letras minúsculas, números e hífen (3 a 40 caracteres).'} error={f.slug && !slugOk ? 'Endereço inválido' : undefined}>
               <Input id="slug" value={f.slug} onChange={(e) => setF({ ...f, slug: slugify(e.target.value) })} />
             </Field>
-            <Field label="Descrição" htmlFor="pdesc" optional><Textarea id="pdesc" rows={2} maxLength={500} placeholder="Ex.: Banho e tosa com carinho, rações e acessórios. Leva e traz grátis no bairro." value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></Field>
+            <Field label="Descrição" htmlFor="pdesc" optional><Textarea id="pdesc" rows={2} maxLength={500} placeholder="Ex.: Atendimento com hora marcada e entrega grátis no bairro." value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></Field>
             <Field label="WhatsApp para pedidos" htmlFor="pwa" optional hint="Se vazio, usamos o telefone do estabelecimento."><Input id="pwa" inputMode="tel" value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: e.target.value })} /></Field>
             <div className="space-y-3">
               <Checkbox label="Publicar catálogo" description="Mostra os produtos marcados como “mostrar no catálogo” e os serviços." checked={f.catalog} onChange={(e) => setF({ ...f, catalog: e.target.checked })} />

@@ -137,7 +137,7 @@ jobs.append(page('story-2-completo', 1080, 1920, f'''
 jobs.append(page('og-image', 1200, 630, f'''
 {logo_html()}
 <h1 style="font-size:64px;margin-top:40px;max-width:640px">Seus clientes não precisam lembrar de voltar. <span class="g">O VoltaCerta lembra por você.</span></h1>
-<p class="sub" style="font-size:26px;margin-top:22px;max-width:600px">Recompra, agenda, caixa e estoque para pet shops.</p>
+<p class="sub" style="font-size:26px;margin-top:22px;max-width:600px">Recompra, agenda, caixa e estoque para o seu negócio.</p>
 <div class="phone" style="position:absolute;right:70px;top:60px;width:330px;height:640px"><img src="{T}m-recompras.png" style="height:612px"></div>
 ''', pad=64, logo=34, mark=52))
 

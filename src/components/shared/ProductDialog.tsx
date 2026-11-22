@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button'
 import { Checkbox, Field, Input, Select, Textarea } from '@/components/ui/input'
 import { productSchema, useSaveProduct, type ProductFormValues, type ProductInput } from '@/features/products/api'
 import { useOrg } from '@/features/org/OrgProvider'
-import { CATEGORY, UNIT } from '@/domain/labels'
+import { UNIT } from '@/domain/labels'
+import { SUGGESTED_DAYS, mergeOptions, productCategoryLabel, suggestionsFor, toStoredProductCategory } from '@/domain/business'
+import { CategoryInput } from '@/components/shared/CategoryInput'
+import { useProducts } from '@/features/products/api'
 import type { Product } from '@/types/models'
 
-const SUGGESTED_DAYS: Record<string, number> = { racoes: 30, petiscos: 15, areia: 20, medicamentos: 30, higiene: 45 }
-
 const empty: ProductFormValues = {
-  name: '', category: 'racoes', brand: '', sku: '', price: '', cost: '', size_value: '', unit: 'kg', description: '', avg_duration_days: '30', active: true,
+  name: '', category: '', brand: '', sku: '', price: '', cost: '', size_value: '', unit: 'un', description: '', avg_duration_days: '30', active: true,
   track_stock: false, min_stock: '', supplier: '', lead_time_days: '7', catalog_visible: false, ncm: '', cfop: '5102', fiscal_origin: '0',
 }
 
@@ -20,6 +21,12 @@ export function ProductDialog({ open, onOpenChange, product, onSaved }: { open: 
   const save = useSaveProduct()
   const { org, canWrite } = useOrg()
   const form = useForm<ProductFormValues, unknown, ProductInput>({ resolver: zodResolver(productSchema), defaultValues: empty })
+  const products = useProducts({ includeInactive: true })
+  const sugg = suggestionsFor(org.business_type)
+  const options = React.useMemo(
+    () => mergeOptions(sugg.products, [...new Set((products.data ?? []).map((p) => p.category))].filter((c) => c !== 'outros'), productCategoryLabel),
+    [sugg.products, products.data],
+  )
 
   React.useEffect(() => {
     if (!open) return
@@ -27,7 +34,7 @@ export function ProductDialog({ open, onOpenChange, product, onSaved }: { open: 
       product
         ? {
             name: product.name,
-            category: product.category,
+            category: product.category === 'outros' ? '' : productCategoryLabel(product.category),
             brand: product.brand ?? '',
             sku: product.sku ?? '',
             price: String(product.price).replace('.', ','),
@@ -59,7 +66,7 @@ export function ProductDialog({ open, onOpenChange, product, onSaved }: { open: 
   })
 
   const e = form.formState.errors
-  const category = form.watch('category')
+  const category = toStoredProductCategory(form.watch('category') ?? '')
 
   return (
     <Dialog
@@ -77,22 +84,20 @@ export function ProductDialog({ open, onOpenChange, product, onSaved }: { open: 
     >
       <form onSubmit={onSubmit} className="space-y-4" noValidate>
         <Field label="Nome" htmlFor="name" error={e.name?.message}>
-          <Input id="name" autoFocus placeholder="Ex.: Ração Premium Adulto 15kg" aria-invalid={!!e.name} {...form.register('name')} />
+          <Input id="name" autoFocus placeholder={sugg.productExample} aria-invalid={!!e.name} {...form.register('name')} />
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Categoria" htmlFor="category">
-            <Select
+          <Field label="Categoria" htmlFor="category" optional error={e.category?.message}>
+            <CategoryInput
               id="category"
+              options={options}
               {...form.register('category', {
                 onChange: (ev) => {
-                  if (!product && SUGGESTED_DAYS[ev.target.value]) form.setValue('avg_duration_days', String(SUGGESTED_DAYS[ev.target.value]))
+                  const days = SUGGESTED_DAYS[toStoredProductCategory(ev.target.value)]
+                  if (!product && days) form.setValue('avg_duration_days', String(days))
                 },
               })}
-            >
-              {Object.entries(CATEGORY).map(([k, v]) => (
-                <option key={k} value={k}>{v}</option>
-              ))}
-            </Select>
+            />
           </Field>
           <Field label="Marca" htmlFor="brand" optional>
             <Input id="brand" {...form.register('brand')} />
@@ -125,7 +130,7 @@ export function ProductDialog({ open, onOpenChange, product, onSaved }: { open: 
           label="Duração média estimada (dias)"
           htmlFor="avg_duration_days"
           error={e.avg_duration_days?.message}
-          hint={`Quanto tempo 1 unidade costuma durar. Em branco usa o padrão do estabelecimento (${org.default_duration_days} dias).${SUGGESTED_DAYS[category] ? ` Sugestão para ${CATEGORY[category as keyof typeof CATEGORY].toLowerCase()}: ${SUGGESTED_DAYS[category]} dias.` : ''}`}
+          hint={`Quanto tempo 1 unidade costuma durar. Em branco usa o padrão do estabelecimento (${org.default_duration_days} dias).${SUGGESTED_DAYS[category] ? ` Sugestão para ${productCategoryLabel(category).toLowerCase()}: ${SUGGESTED_DAYS[category]} dias.` : ''}`}
         >
           <Input id="avg_duration_days" inputMode="numeric" aria-invalid={!!e.avg_duration_days} {...form.register('avg_duration_days')} />
         </Field>
@@ -152,7 +157,7 @@ export function ProductDialog({ open, onOpenChange, product, onSaved }: { open: 
         <details className="group rounded-md border border-border">
           <summary className="cursor-pointer list-none px-3 py-2.5 text-[13px] font-medium">Dados fiscais (para nota fiscal)</summary>
           <div className="grid grid-cols-3 gap-4 border-t border-border p-3">
-            <Field label="NCM" htmlFor="ncm" optional error={e.ncm?.message} hint="Ex.: ração 23091000">
+            <Field label="NCM" htmlFor="ncm" optional error={e.ncm?.message} hint="8 dígitos">
               <Input id="ncm" inputMode="numeric" maxLength={8} {...form.register('ncm')} />
             </Field>
             <Field label="CFOP" htmlFor="cfop" error={e.cfop?.message} hint="Venda: 5102">

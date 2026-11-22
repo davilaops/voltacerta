@@ -10,7 +10,8 @@ import { Field, Input, Select } from '@/components/ui/input'
 import { useOrg } from '@/features/org/OrgProvider'
 import { supabase } from '@/lib/supabase'
 import { errorMessage } from '@/lib/errors'
-import { BR_STATES, BUSINESS_TYPE } from '@/domain/labels'
+import { BR_STATES } from '@/domain/labels'
+import { BUSINESS_TYPES } from '@/domain/business'
 import { initials } from '@/lib/utils'
 import { ReadOnlyNotice } from './shared'
 
@@ -131,10 +132,10 @@ export function OrganizationSettings() {
                 <Field label="Telefone comercial" htmlFor="ophone" optional>
                   <Input id="ophone" type="tel" {...form.register('phone')} />
                 </Field>
-                <Field label="Tipo de estabelecimento" htmlFor="otype" optional>
+                <Field label="Ramo do estabelecimento" htmlFor="otype" optional hint="Usado para sugerir categorias e exemplos.">
                   <Select id="otype" {...form.register('business_type')}>
                     <option value="">Selecione</option>
-                    {Object.entries(BUSINESS_TYPE).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    {BUSINESS_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </Select>
                 </Field>
               </div>

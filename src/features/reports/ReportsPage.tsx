@@ -11,10 +11,9 @@ import { useOrg } from '@/features/org/OrgProvider'
 import { rpc } from '@/lib/supabase'
 import { toCsv, downloadFile, type CsvColumn } from '@/lib/csv'
 import { formatCurrency, formatDate, formatNumber, formatPercent, formatPhone } from '@/lib/format'
-import { CATEGORY } from '@/domain/labels'
+import { productCategoryLabel } from '@/domain/business'
 import { cn } from '@/lib/utils'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
-import type { ProductCategory } from '@/types/models'
 
 type Row = Record<string, unknown>
 type Kind = 'sales_by_period' | 'top_products' | 'top_customers' | 'inactive_customers' | 'completed_repurchases' | 'lost_opportunities' | 'recovered_revenue' | 'recovery_rate'
@@ -60,7 +59,7 @@ function fmt(v: unknown, f: Fmt = 'text'): string {
     case 'number': return formatNumber(v as number)
     case 'percent': return formatPercent(Number(v))
     case 'phone': return formatPhone(String(v))
-    case 'category': return CATEGORY[v as ProductCategory] ?? String(v)
+    case 'category': return productCategoryLabel(String(v))
     case 'bool': return v ? 'Sim' : 'Não'
     default: return String(v)
   }

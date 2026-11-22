@@ -6,11 +6,13 @@ export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'canceled'
 export type PredictionStatus = 'open' | 'contacted' | 'completed' | 'ignored'
 export type PredictionStage = 'prevista' | 'proxima' | 'hoje' | 'atrasada' | 'contatada' | 'concluida' | 'ignorada'
 export type ContactResult = 'respondeu' | 'nao_respondeu' | 'comprou' | 'sem_interesse' | 'retornar_depois'
-export type ProductCategory = 'racoes' | 'petiscos' | 'areia' | 'medicamentos' | 'higiene' | 'acessorios' | 'outros'
+/** Texto livre (os códigos antigos de pet shop continuam válidos). */
+export type ProductCategory = string
 export type ProductUnit = 'kg' | 'g' | 'l' | 'ml' | 'un' | 'cx' | 'pct'
 export type Species = 'cao' | 'gato' | 'ave' | 'roedor' | 'peixe' | 'reptil' | 'outro'
 export type CustomerSituation = 'sem_compras' | 'precisa_contato' | 'proxima' | 'em_dia' | 'inativo'
-export type BusinessType = 'pet_shop' | 'loja_racao' | 'veterinario' | 'delivery' | 'rede' | 'outro'
+/** Código do ramo (ver src/domain/business.ts). */
+export type BusinessType = string
 
 export interface Organization {
   id: string
@@ -325,8 +327,8 @@ export interface StockOverview {
 // ---------------------------------------------------------------------
 // Serviços, profissionais, pacotes e agenda
 // ---------------------------------------------------------------------
-export type ServiceCategory = 'banho' | 'tosa' | 'banho_tosa' | 'hidratacao' | 'unhas' | 'consulta' | 'vacina' | 'transporte' | 'outro'
-export type ProfessionalRole = 'banhista' | 'tosador' | 'banhista_tosador' | 'veterinario' | 'atendente' | 'motorista' | 'outro'
+export type ServiceCategory = string
+export type ProfessionalRole = string
 export type AppointmentStatus = 'requested' | 'scheduled' | 'confirmed' | 'in_progress' | 'done' | 'canceled' | 'no_show'
 
 export interface Service {

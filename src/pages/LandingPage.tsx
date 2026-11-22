@@ -14,7 +14,7 @@ import {
   PackageSearch,
   RefreshCcw,
   Receipt,
-  Scissors,
+  CalendarDays,
   ShieldCheck,
   Smartphone,
   TrendingDown,
@@ -56,9 +56,9 @@ function Section({ id, eyebrow, title, subtitle, children, className }: { id?: s
 /** Ilustração estática do painel (dados de exemplo, rotulados como demonstração). */
 function DashboardPreview() {
   const rows = [
-    { name: 'Mariana Alves', product: 'Ração Golden Adulto 15kg', stage: 'Atrasada', tone: 'text-[#ff7a7a] bg-danger/10 border-danger/25', when: 'há 3 dias' },
-    { name: 'Carlos Pereira', product: 'Areia Pipicat 4kg', stage: 'Hoje', tone: 'text-warning bg-warning/10 border-warning/25', when: 'hoje' },
-    { name: 'Juliana Costa', product: 'Antipulgas NexGard M', stage: 'Próxima', tone: 'text-info bg-info/10 border-info/25', when: 'em 4 dias' },
+    { name: 'Mariana Alves', product: 'Corte e escova', stage: 'Atrasada', tone: 'text-[#ff7a7a] bg-danger/10 border-danger/25', when: 'há 3 dias' },
+    { name: 'Carlos Pereira', product: 'Café especial 500g', stage: 'Hoje', tone: 'text-warning bg-warning/10 border-warning/25', when: 'hoje' },
+    { name: 'Juliana Costa', product: 'Troca de óleo', stage: 'Próxima', tone: 'text-info bg-info/10 border-info/25', when: 'em 4 dias' },
   ]
   return (
     <div className="relative mx-auto max-w-5xl">
@@ -103,7 +103,7 @@ function DashboardPreview() {
           <div className="hidden rounded-lg border border-border bg-bg/40 p-4 md:block">
             <div className="text-[13px] font-semibold">Mensagem pronta</div>
             <div className="mt-3 rounded-lg rounded-tl-none bg-[#0b3d2e] p-3 text-[12.5px] leading-relaxed text-[#e7fbef]">
-              Olá, Mariana! Tudo bem? Estamos passando para saber se você está precisando repor Ração Golden Adulto 15kg para seu pet. Podemos separar para você!
+              Olá, Mariana! Já está na hora do seu próximo corte e escova. Quer que a gente reserve um horário?
             </div>
             <div className="mt-4 flex h-8 items-center justify-center gap-2 rounded-md bg-[#1f9d55]/20 text-[12px] font-medium text-[#4ade80]">
               <MessageCircle className="size-3.5" /> Abrir WhatsApp
@@ -212,14 +212,14 @@ export function LandingPage() {
           <div className="pointer-events-none absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgb(38 50 71 / 0.35) 1px, transparent 1px), linear-gradient(90deg, rgb(38 50 71 / 0.35) 1px, transparent 1px)', backgroundSize: '56px 56px', maskImage: 'radial-gradient(ellipse 70% 50% at 50% 0%, black, transparent)' }} />
           <div className="relative mx-auto max-w-4xl text-center page-enter">
             <span className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-muted">
-              <span className="size-1.5 rounded-full bg-brand" /> Recompra inteligente para pet shops
+              <span className="size-1.5 rounded-full bg-brand" /> Gestão e recompra para qualquer negócio
             </span>
             <h1 className="mt-6 text-4xl font-semibold leading-[1.08] tracking-tight sm:text-6xl">
               Seus clientes não precisam lembrar de voltar.{' '}
               <span className="text-brand">O VoltaCerta lembra por você.</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base text-muted sm:text-lg">
-              Identifique quando seus clientes estão próximos de precisar de novos produtos e transforme oportunidades de recompra em novas vendas.
+              Loja, salão, oficina, mercado, clínica ou pet shop: saiba quando cada cliente vai precisar comprar ou voltar e transforme isso em novas vendas. Com agenda, caixa, estoque e financeiro no mesmo lugar.
             </p>
             <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
               <Button size="lg" asChild><AppLink to="/cadastro">Começar agora <ArrowRight /></AppLink></Button>
@@ -233,11 +233,11 @@ export function LandingPage() {
         </section>
 
         {/* Problema */}
-        <Section eyebrow="O problema" title="A venda que você não vê é a que mais se perde" subtitle="Ração, areia e antipulgas acabam em datas previsíveis. Quando ninguém lembra o cliente, ele compra no primeiro lugar que aparecer.">
+        <Section eyebrow="O problema" title="A venda que você não vê é a que mais se perde" subtitle="Produtos acabam e serviços precisam ser refeitos em datas previsíveis. Quando ninguém lembra o cliente, ele compra no primeiro lugar que aparecer.">
           <div className="grid gap-4 md:grid-cols-3">
             {[
               { icon: UserRoundX, title: 'Clientes somem sem aviso', text: 'Sem acompanhamento, você só percebe que o cliente parou de comprar meses depois.' },
-              { icon: TrendingDown, title: 'Recompra fica para a concorrência', text: 'O produto acaba e o tutor resolve no supermercado ou no aplicativo mais próximo.' },
+              { icon: TrendingDown, title: 'Recompra fica para a concorrência', text: 'Na hora de repor ou voltar, o cliente resolve no concorrente ou no aplicativo mais próximo.' },
               { icon: ClipboardList, title: 'Controle no caderno não escala', text: 'Planilhas e anotações não dizem quem precisa de contato hoje.' },
             ].map(({ icon: Icon, title, text }) => (
               <div key={title} className="rounded-xl border border-border bg-surface p-6">
@@ -253,8 +253,8 @@ export function LandingPage() {
         <Section id="como-funciona" eyebrow="Como funciona" title="Três passos para nunca mais perder uma recompra" className="bg-surface/40">
           <ol className="grid gap-4 md:grid-cols-3">
             {[
-              { n: '01', icon: PackageSearch, title: 'Cadastre produtos e duração', text: 'Informe quanto tempo cada produto costuma durar: ração 15 kg, 35 dias; areia, 20 dias.' },
-              { n: '02', icon: CalendarClock, title: 'Registre as compras', text: 'O VoltaCerta calcula quando cada produto vai acabar, ajustando pela quantidade e pelo histórico do cliente.' },
+              { n: '01', icon: PackageSearch, title: 'Cadastre produtos e serviços', text: 'Informe quanto tempo cada produto dura ou de quanto em quanto tempo o serviço se repete: café 500 g, 20 dias; corte de cabelo, 30 dias.' },
+              { n: '02', icon: CalendarClock, title: 'Registre as compras', text: 'O VoltaCerta calcula quando cada cliente vai precisar de novo, ajustando pela quantidade e pelo histórico dele.' },
               { n: '03', icon: MessageCircle, title: 'Contate no momento certo', text: 'Veja quem precisa de contato hoje e abra o WhatsApp com a mensagem pronta.' },
             ].map(({ n, icon: Icon, title, text }) => (
               <li key={n} className="relative rounded-xl border border-border bg-surface p-6">
@@ -274,7 +274,7 @@ export function LandingPage() {
               { icon: Bell, title: 'Clientes para contatar hoje', text: 'Previsões vencidas organizadas por urgência.' },
               { icon: RefreshCcw, title: 'Central de recompras', text: 'Próximas, para hoje, atrasadas e concluídas.' },
               { icon: BarChart3, title: 'Receita recuperada', text: 'Vendas concluídas após contato, separadas do valor potencial.' },
-              { icon: Users, title: 'Histórico do cliente', text: 'Pets, compras, contatos e próximas recompras.' },
+              { icon: Users, title: 'Histórico do cliente', text: 'Compras, atendimentos, contatos e próximas recompras.' },
             ].map(({ icon: Icon, title, text }) => (
               <div key={title} className="rounded-xl border border-border bg-surface p-5">
                 <span className="grid size-9 place-items-center rounded-lg border border-border bg-surface-2 text-brand"><Icon className="size-4" /></span>
@@ -290,7 +290,7 @@ export function LandingPage() {
           <div className="mx-auto grid max-w-4xl gap-x-10 gap-y-5 sm:grid-cols-2">
             {[
               'Não perca oportunidades de recompra',
-              'Organize seus clientes e pets em um só lugar',
+              'Organize seus clientes em um só lugar',
               'Saiba exatamente quem precisa de contato',
               'Recupere clientes que pararam de comprar',
               'Aumente a recorrência de compras',
@@ -305,17 +305,17 @@ export function LandingPage() {
         </Section>
 
         {/* Funcionalidades */}
-        <Section id="funcionalidades" eyebrow="Funcionalidades" title="Feito para a rotina do pet shop">
+        <Section id="funcionalidades" eyebrow="Funcionalidades" title="Feito para a rotina do pequeno negócio">
           <div className="grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
             {[
               { icon: CalendarClock, title: 'Previsão inteligente', text: 'Combina duração do produto, quantidade e intervalo real entre compras, sem oscilar com poucos dados.' },
-              { icon: MessageCircle, title: 'WhatsApp com um clique', text: 'Modelos de mensagem personalizáveis com nome do cliente, produto e pet.' },
-              { icon: Users, title: 'CRM de clientes e pets', text: 'Vários pets por cliente, histórico completo e busca por nome ou telefone.' },
+              { icon: MessageCircle, title: 'WhatsApp com um clique', text: 'Modelos de mensagem personalizáveis com nome do cliente, produto e serviço.' },
+              { icon: Users, title: 'Cadastro de clientes', text: 'Histórico completo de compras e atendimentos, com busca por nome ou telefone.' },
               { icon: BarChart3, title: 'Relatórios com exportação', text: 'Vendas, produtos mais vendidos, clientes inativos e taxa de recuperação em CSV.' },
-              { icon: Scissors, title: 'Agenda de banho e tosa', text: 'Atendimentos por profissional, sem horário duplicado, com pacotes e lembrete na véspera.' },
+              { icon: CalendarDays, title: 'Agenda de atendimentos', text: 'Horários por profissional, sem conflito, com pacotes e lembrete na véspera.' },
               { icon: Receipt, title: 'Caixa e estoque', text: 'Venda no balcão com Pix, cartão, dinheiro e fiado. O estoque baixa sozinho e sugere o que comprar.' },
               { icon: Wallet, title: 'Financeiro', text: 'Faturamento, contas a pagar e a receber, fluxo de caixa e lucro estimado.' },
-              { icon: Globe, title: 'Loja online', text: 'Catálogo e agendamento pela internet com o link do seu pet shop.' },
+              { icon: Globe, title: 'Loja online', text: 'Catálogo e agendamento pela internet com o link do seu negócio.' },
               { icon: ShieldCheck, title: 'Dados protegidos e LGPD', text: 'Isolamento por estabelecimento, consentimento e bloqueio de contato registrados.' },
               { icon: Smartphone, title: 'Funciona no celular', text: 'Acompanhe e contate clientes de qualquer lugar, direto do balcão.' },
             ].map(({ icon: Icon, title, text }) => (
@@ -337,10 +337,11 @@ export function LandingPage() {
         <Section id="perguntas" eyebrow="Perguntas frequentes" title="Dúvidas comuns">
           <div className="mx-auto max-w-3xl border-t border-border">
             {[
+              { q: 'Serve para o meu tipo de negócio?', a: 'Sim. O VoltaCerta funciona para qualquer estabelecimento que vende produtos ou serviços para clientes que voltam: lojas, mercados, salões, barbearias, oficinas, clínicas, academias, pet shops e outros. No cadastro você escolhe o ramo e o sistema sugere categorias e exemplos.' },
               { q: 'Preciso instalar alguma coisa?', a: 'Não. O VoltaCerta funciona no navegador do computador e do celular.' },
               { q: 'As mensagens são enviadas automaticamente?', a: 'Por padrão, você revisa e envia cada mensagem pelo seu WhatsApp com um clique. Se quiser, dá para ativar o envio automático pela API oficial do WhatsApp Business (Meta), com a sua própria conta.' },
               { q: 'Como o sistema sabe quando o produto vai acabar?', a: 'Você informa a duração média de cada produto. A previsão considera a quantidade comprada e, com o tempo, o intervalo real entre as compras de cada cliente.' },
-              { q: 'O VoltaCerta substitui meu sistema de vendas?', a: 'Pode substituir. Ele tem agenda de banho e tosa, caixa, estoque, financeiro e emissão de nota fiscal (com a sua conta na Focus NFe). Se preferir, use só a parte de recompra junto com o sistema que você já tem.' },
+              { q: 'O VoltaCerta substitui meu sistema de vendas?', a: 'Pode substituir. Ele tem agenda, caixa, estoque, financeiro e emissão de nota fiscal (com a sua conta na Focus NFe). Se preferir, use só a parte de recompra junto com o sistema que você já tem.' },
               { q: 'Meus dados ficam seguros?', a: 'Cada estabelecimento tem seus dados isolados com regras de acesso no próprio banco de dados. Você pode exportar ou excluir dados de clientes quando precisar.' },
               { q: 'Posso cancelar quando quiser?', a: 'Sim. Não há fidelidade nem taxa de cancelamento.' },
             ].map((f) => <Faq key={f.q} {...f} />)}
@@ -362,7 +363,7 @@ export function LandingPage() {
         <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
           <div>
             <Logo />
-            <p className="mt-2 text-xs text-subtle">Recompra inteligente para pet shops.</p>
+            <p className="mt-2 text-xs text-subtle">Gestão e recompra para o seu negócio.</p>
           </div>
           <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted">
             <a href="#planos" className="hover:text-fg">Planos</a>

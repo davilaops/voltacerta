@@ -4,9 +4,9 @@ import { z } from 'zod'
 import { supabase, unwrap } from '@/lib/supabase'
 import { errorMessage } from '@/lib/errors'
 import { useOrg } from '@/features/org/OrgProvider'
+import { toStoredProductCategory } from '@/domain/business'
 import type { Product } from '@/types/models'
 
-export const CATEGORY_VALUES = ['racoes', 'petiscos', 'areia', 'medicamentos', 'higiene', 'acessorios', 'outros'] as const
 export const UNIT_VALUES = ['kg', 'g', 'l', 'ml', 'un', 'cx', 'pct'] as const
 
 const money = z
@@ -15,7 +15,8 @@ const money = z
 
 export const productSchema = z.object({
   name: z.string().trim().min(2, 'Informe o nome').max(120),
-  category: z.enum(CATEGORY_VALUES),
+  // Texto livre; o nome de uma categoria antiga volta a ser o código antigo
+  category: z.string().max(40, 'Use até 40 caracteres').transform(toStoredProductCategory),
   brand: z.string().trim().max(80).optional().or(z.literal('')),
   sku: z.string().trim().max(60).optional().or(z.literal('')),
   price: money.pipe(z.number({ message: 'Valor inválido' }).min(0, 'Valor inválido').max(1_000_000)),

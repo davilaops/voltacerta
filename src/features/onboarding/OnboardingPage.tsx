@@ -2,7 +2,6 @@ import * as React from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Check } from 'lucide-react'
 import { Logo } from '@/components/brand/Logo'
 import { Button } from '@/components/ui/button'
 import { Field, Input, Select } from '@/components/ui/input'
@@ -12,11 +11,13 @@ import { rpc, supabase } from '@/lib/supabase'
 import { trackEvent } from '@/lib/tracking'
 import { errorMessage } from '@/lib/errors'
 import { normalizePhone } from '@/lib/phone'
-import { BR_STATES, BUSINESS_TYPE, CATEGORY } from '@/domain/labels'
+import { BR_STATES } from '@/domain/labels'
+import { BUSINESS_TYPES, SUGGESTED_DAYS, suggestionsFor, toStoredProductCategory } from '@/domain/business'
+import { CategoryInput } from '@/components/shared/CategoryInput'
 import { cn } from '@/lib/utils'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
 
-const STEPS = ['Estabelecimento', 'Responsável', 'Contato', 'Localização', 'Tipo', 'Primeiro produto', 'Primeiro cliente']
+const STEPS = ['Estabelecimento', 'Responsável', 'Contato', 'Localização', 'Ramo', 'Primeiro produto', 'Primeiro cliente']
 const STORAGE = 'vc.onboarding'
 
 interface Draft {
@@ -44,12 +45,13 @@ export function OnboardingPage() {
   const [error, setError] = React.useState<string | null>(null)
   const [draft, setDraft] = React.useState<Draft>(() => {
     try {
-      return { name: '', owner: (user?.user_metadata?.full_name as string) ?? '', phone: '', city: '', state: '', type: 'pet_shop', ...JSON.parse(sessionStorage.getItem(STORAGE) ?? '{}') }
+      return { name: '', owner: (user?.user_metadata?.full_name as string) ?? '', phone: '', city: '', state: '', type: '', ...JSON.parse(sessionStorage.getItem(STORAGE) ?? '{}') }
     } catch {
-      return { name: '', owner: '', phone: '', city: '', state: '', type: 'pet_shop' }
+      return { name: '', owner: '', phone: '', city: '', state: '', type: '' }
     }
   })
-  const [product, setProduct] = React.useState({ name: '', category: 'racoes', price: '', days: '30' })
+  const [product, setProduct] = React.useState({ name: '', category: '', price: '', days: '30' })
+  const sugg = suggestionsFor(draft.type)
   const [customer, setCustomer] = React.useState({ name: '', phone: '' })
 
   React.useEffect(() => {
@@ -69,6 +71,7 @@ export function OnboardingPage() {
     if (step === 0 && draft.name.trim().length < 2) return 'Informe o nome do estabelecimento'
     if (step === 1 && draft.owner.trim().length < 2) return 'Informe o nome do responsável'
     if (step === 2 && draft.phone && !normalizePhone(draft.phone)) return 'Telefone inválido'
+    if (step === 4 && !draft.type) return 'Escolha o ramo do estabelecimento'
     return null
   }
 
@@ -112,7 +115,7 @@ export function OnboardingPage() {
           const price = Number(product.price.replace(',', '.') || '0')
           const days = Number(product.days)
           if (!(price >= 0) || !(days >= 1 && days <= 365)) throw new Error('Verifique preço e duração (1 a 365 dias)')
-          const { error } = await supabase.from('products').insert({ organization_id: orgId, name: product.name.trim(), category: product.category, price, avg_duration_days: days })
+          const { error } = await supabase.from('products').insert({ organization_id: orgId, name: product.name.trim(), category: toStoredProductCategory(product.category), price, avg_duration_days: days })
           if (error) throw error
         }
         setStep(6)
@@ -152,7 +155,7 @@ export function OnboardingPage() {
         <div key={step} className="mt-6 page-enter">
           {step === 0 && (
             <Step title="Qual é o nome do seu estabelecimento?" subtitle="É assim que ele aparecerá no painel e nas mensagens.">
-              <Input autoFocus value={draft.name} onChange={set('name')} placeholder="Ex.: Pet Shop Amigo Fiel" onKeyDown={(e) => e.key === 'Enter' && next()} />
+              <Input autoFocus value={draft.name} onChange={set('name')} placeholder="Ex.: Mercadinho Bom Preço" onKeyDown={(e) => e.key === 'Enter' && next()} />
             </Step>
           )}
           {step === 1 && (
@@ -179,31 +182,24 @@ export function OnboardingPage() {
             </Step>
           )}
           {step === 4 && (
-            <Step title="Qual é o tipo de estabelecimento?">
-              <div className="grid gap-2 sm:grid-cols-2">
-                {Object.entries(BUSINESS_TYPE).map(([k, v]) => (
-                  <button
-                    key={k}
-                    type="button"
-                    onClick={() => setDraft((d) => ({ ...d, type: k }))}
-                    className={cn('flex items-center justify-between rounded-md border px-3 py-2.5 text-left text-sm transition-colors', draft.type === k ? 'border-brand/60 bg-brand/10 text-fg' : 'border-border text-muted hover:border-border-strong')}
-                  >
-                    {v}
-                    {draft.type === k && <Check className="size-4 text-brand" />}
-                  </button>
-                ))}
-              </div>
+            <Step title="Qual é o ramo do estabelecimento?" subtitle="Serve para sugerir categorias e exemplos. O sistema funciona igual para todos os ramos.">
+              <Select autoFocus aria-label="Ramo do estabelecimento" value={draft.type} onChange={set('type')}>
+                <option value="">Escolha o ramo</option>
+                {BUSINESS_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+              </Select>
             </Step>
           )}
           {step === 5 && (
             <Step title="Cadastre seu primeiro produto" subtitle="A duração média é usada para prever quando o cliente vai precisar repor.">
               <div className="space-y-3">
-                <Field label="Nome do produto" htmlFor="ob-p"><Input id="ob-p" autoFocus value={product.name} onChange={(e) => setProduct((p) => ({ ...p, name: e.target.value }))} placeholder="Ração Premium Adulto 15kg" /></Field>
+                <Field label="Nome do produto" htmlFor="ob-p"><Input id="ob-p" autoFocus value={product.name} onChange={(e) => setProduct((p) => ({ ...p, name: e.target.value }))} placeholder={sugg.productExample} /></Field>
                 <div className="grid grid-cols-3 gap-3">
                   <Field label="Categoria" htmlFor="ob-c">
-                    <Select id="ob-c" value={product.category} onChange={(e) => setProduct((p) => ({ ...p, category: e.target.value }))}>
-                      {Object.entries(CATEGORY).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                    </Select>
+                    <CategoryInput id="ob-c" options={sugg.products} value={product.category} onChange={(e) => {
+                      const v = e.target.value
+                      const days = SUGGESTED_DAYS[toStoredProductCategory(v)]
+                      setProduct((p) => ({ ...p, category: v, days: days ? String(days) : p.days }))
+                    }} />
                   </Field>
                   <Field label="Preço (R$)" htmlFor="ob-pr"><Input id="ob-pr" inputMode="decimal" value={product.price} onChange={(e) => setProduct((p) => ({ ...p, price: e.target.value }))} placeholder="0,00" /></Field>
                   <Field label="Dura (dias)" htmlFor="ob-d"><Input id="ob-d" inputMode="numeric" value={product.days} onChange={(e) => setProduct((p) => ({ ...p, days: e.target.value }))} /></Field>
@@ -212,7 +208,7 @@ export function OnboardingPage() {
             </Step>
           )}
           {step === 6 && (
-            <Step title="Cadastre seu primeiro cliente" subtitle="Você poderá adicionar pets e registrar compras em seguida.">
+            <Step title="Cadastre seu primeiro cliente" subtitle="Você poderá registrar compras e atendimentos em seguida.">
               <div className="space-y-3">
                 <Field label="Nome completo" htmlFor="ob-cn"><Input id="ob-cn" autoFocus value={customer.name} onChange={(e) => setCustomer((c) => ({ ...c, name: e.target.value }))} /></Field>
                 <Field label="Telefone (WhatsApp)" htmlFor="ob-cp" optional><Input id="ob-cp" type="tel" value={customer.phone} onChange={(e) => setCustomer((c) => ({ ...c, phone: e.target.value }))} placeholder="(11) 98888-7777" /></Field>

@@ -3,20 +3,16 @@ import type {
   AutoKind,
   FinanceCategory,
   PaymentMethod,
-  ProfessionalRole,
   ReminderKind,
   SaleChannel,
   Segment,
-  ServiceCategory,
   StockKind,
   TemplateKind,
-  BusinessType,
   ContactResult,
   CustomerSituation,
   MemberRole,
   PlanTier,
   PredictionStage,
-  ProductCategory,
   ProductUnit,
   Species,
   SubscriptionStatus,
@@ -42,15 +38,7 @@ export const SITUATION: Record<CustomerSituation, { label: string; tone: Tone }>
   inativo: { label: 'Inativo', tone: 'neutral' },
 }
 
-export const CATEGORY: Record<ProductCategory, string> = {
-  racoes: 'Rações',
-  petiscos: 'Petiscos',
-  areia: 'Areia para gatos',
-  medicamentos: 'Medicamentos',
-  higiene: 'Higiene',
-  acessorios: 'Acessórios',
-  outros: 'Outros',
-}
+/** Categorias de produto são texto livre: use productCategoryLabel (src/domain/business.ts). */
 
 export const UNIT: Record<ProductUnit, string> = {
   kg: 'kg',
@@ -86,15 +74,6 @@ export const ROLE: Record<MemberRole, string> = {
   employee: 'Funcionário',
 }
 
-export const BUSINESS_TYPE: Record<BusinessType, string> = {
-  pet_shop: 'Pet shop',
-  loja_racao: 'Loja de rações',
-  veterinario: 'Produtos veterinários',
-  delivery: 'Pet shop com delivery',
-  rede: 'Rede de lojas',
-  outro: 'Outro',
-}
-
 export const SUBSCRIPTION_STATUS: Record<SubscriptionStatus, { label: string; tone: Tone }> = {
   trialing: { label: 'Período de teste', tone: 'info' },
   active: { label: 'Ativa', tone: 'brand' },
@@ -112,30 +91,8 @@ export const BR_STATES = [
 export const PLAN_NAME: Record<PlanTier, string> = { inicial: 'Inicial', profissional: 'Profissional', premium: 'Premium' }
 
 // ---------------------------------------------------------------------
-// Módulos de gestão
+// Módulos de gestão (categorias de serviço e funções: src/domain/business.ts)
 // ---------------------------------------------------------------------
-export const SERVICE_CATEGORY: Record<ServiceCategory, string> = {
-  banho: 'Banho',
-  tosa: 'Tosa',
-  banho_tosa: 'Banho e tosa',
-  hidratacao: 'Hidratação',
-  unhas: 'Corte de unhas',
-  consulta: 'Consulta',
-  vacina: 'Vacina',
-  transporte: 'Leva e traz',
-  outro: 'Outro',
-}
-
-export const PROFESSIONAL_ROLE: Record<ProfessionalRole, string> = {
-  banhista: 'Banhista',
-  tosador: 'Tosador(a)',
-  banhista_tosador: 'Banhista e tosador(a)',
-  veterinario: 'Veterinário(a)',
-  atendente: 'Atendente',
-  motorista: 'Motorista',
-  outro: 'Outro',
-}
-
 export const APPOINTMENT_STATUS: Record<AppointmentStatus, { label: string; tone: Tone }> = {
   requested: { label: 'Solicitado online', tone: 'warning' },
   scheduled: { label: 'Agendado', tone: 'info' },

@@ -43,7 +43,7 @@ export function RemindersPage() {
     <>
       <PageHeader
         title="Lembretes"
-        description="Aniversários dos pets, pós-venda, lembretes de agendamento, hora do próximo banho e pacotes perto de vencer. Envie em um clique pelo WhatsApp."
+        description="Aniversários dos pets, pós-venda, lembretes de agendamento, hora do próximo serviço e pacotes perto de vencer. Envie em um clique pelo WhatsApp."
         actions={isAdmin && ctx.integrations?.whatsapp && (
           <Button variant="secondary" loading={run.isPending} onClick={() => run.mutate()}><Send /> Enviar automáticos agora</Button>
         )}

@@ -30,7 +30,7 @@ export function MarketingTracker() {
         <div className="flex gap-3">
           <Cookie className="mt-0.5 size-5 shrink-0 text-brand" />
           <p className="text-[13px] leading-relaxed text-muted">
-            Usamos cookies da Meta para medir nossos anúncios. Nenhum dado do seu pet shop é enviado.{' '}
+            Usamos cookies da Meta para medir nossos anúncios. Nenhum dado do seu negócio é enviado.{' '}
             <Link to="/privacidade" className="text-fg underline">Saiba mais</Link>
           </p>
         </div>
